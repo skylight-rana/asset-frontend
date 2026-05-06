@@ -1,16 +1,145 @@
-# React + Vite
+# 🖥️ Asset Management System (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React-based frontend application for managing assets, assignments, and support tickets.
+This system provides separate dashboards for **Admin** and **Employee** roles.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+### 👨‍💼 Admin
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* Manage assets (Add, Update, Delete)
+* Assign assets to employees
+* Update ticket status
+* Upload asset-related documents
 
-## Expanding the ESLint configuration
+### 👩‍💻 Employee
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* View assigned assets
+* Raise support tickets
+* Track ticket status
+
+---
+
+## 🛠️ Tech Stack
+
+* React.js
+* React Router
+* Axios
+* CSS (Custom UI)
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+ ├── components/
+ │    ├── Navbar/
+ │    └── EmployeeNavbar/
+ ├── pages/
+ │    ├── Admin/
+ │    ├── Employee/
+ │    ├── Assets/
+ │    ├── AssignAsset/
+ │    ├── Tickets/
+ │    ├── Upload/
+ │    └── UpdateTicket/
+ ├── services/
+ │    ├── assetService.js
+ │    ├── assignmentService.js
+ │    ├── ticketService.js
+ │    └── adminService.js
+ ├── utils/
+ │    ├── auth.js
+ │    └── ProtectedRoute.js
+ └── App.jsx
+```
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the repository
+
+```
+git clone https://github.com/your-username/asset-management-frontend.git
+cd asset-management-frontend
+```
+
+### 2️⃣ Install dependencies
+
+```
+npm install
+```
+
+### 3️⃣ Start the application
+
+```
+npm start
+```
+
+App will run on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## 🔐 Authentication & Roles
+
+* **Admin**
+
+  * Full access to assets, assignments, ticket updates, and uploads
+
+* **Employee**
+
+  * Can raise and track tickets
+  * Limited access via role-based routing
+
+---
+
+## 🔗 API Configuration
+
+Update backend API URL inside service files:
+
+Example:
+
+```js
+const API = "https://localhost:7117/api";
+```
+
+---
+
+## 📸 Screens
+
+* Admin Dashboard
+* Asset Management
+* Asset Assignment
+* Ticket Management
+* Upload Documents
+* Employee Dashboard
+
+---
+
+## 📌 Future Improvements
+
+* Search & filters
+* Pagination
+* Better error handling
+* Notifications (Toast)
+* Role-based UI enhancements
+
+---
+
+## 👨‍💻 Author
+
+Developed by **Your Name**
+
+---
+
+## 📄 License
+
+This project is for learning/demo purposes.
