@@ -1,20 +1,20 @@
-# 🖥️ Asset Management System (Frontend)
+# Asset Management System (Frontend)
 
 A React-based frontend application for managing assets, assignments, and support tickets.
 This system provides separate dashboards for **Admin** and **Employee** roles.
 
 ---
 
-## 🚀 Features
+## Features
 
-### 👨‍💼 Admin
+### Admin
 
 * Manage assets (Add, Update, Delete)
 * Assign assets to employees
 * Update ticket status
 * Upload asset-related documents
 
-### 👩‍💻 Employee
+### Employee
 
 * View assigned assets
 * Raise support tickets
@@ -22,7 +22,7 @@ This system provides separate dashboards for **Admin** and **Employee** roles.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * React.js
 * React Router
@@ -31,64 +31,7 @@ This system provides separate dashboards for **Admin** and **Employee** roles.
 
 ---
 
-## 📁 Project Structure
-
-```
-src/
- ├── components/
- │    ├── Navbar/
- │    └── EmployeeNavbar/
- ├── pages/
- │    ├── Admin/
- │    ├── Employee/
- │    ├── Assets/
- │    ├── AssignAsset/
- │    ├── Tickets/
- │    ├── Upload/
- │    └── UpdateTicket/
- ├── services/
- │    ├── assetService.js
- │    ├── assignmentService.js
- │    ├── ticketService.js
- │    └── adminService.js
- ├── utils/
- │    ├── auth.js
- │    └── ProtectedRoute.js
- └── App.jsx
-```
-
----
-
-## ⚙️ Setup Instructions
-
-### 1️⃣ Clone the repository
-
-```
-git clone https://github.com/your-username/asset-management-frontend.git
-cd asset-management-frontend
-```
-
-### 2️⃣ Install dependencies
-
-```
-npm install
-```
-
-### 3️⃣ Start the application
-
-```
-npm start
-```
-
-App will run on:
-
-```
-http://localhost:3000
-```
-
----
-
-## 🔐 Authentication & Roles
+## Authentication & Roles
 
 * **Admin**
 
@@ -101,19 +44,7 @@ http://localhost:3000
 
 ---
 
-## 🔗 API Configuration
-
-Update backend API URL inside service files:
-
-Example:
-
-```js
-const API = "https://localhost:7117/api";
-```
-
----
-
-## 📸 Screens
+## Screens
 
 * Admin Dashboard
 * Asset Management
@@ -124,7 +55,7 @@ const API = "https://localhost:7117/api";
 
 ---
 
-## 📌 Future Improvements
+## Future Improvements
 
 * Search & filters
 * Pagination
@@ -134,12 +65,6 @@ const API = "https://localhost:7117/api";
 
 ---
 
-## 👨‍💻 Author
+## Author
 
-Developed by **Your Name**
-
----
-
-## 📄 License
-
-This project is for learning/demo purposes.
+Developed by **Rana Pratap Singh**
