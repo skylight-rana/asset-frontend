@@ -1,0 +1,35 @@
+/* PAGE */
+.container {
+  background: #f1f5f9;
+  min-height: 100vh;
+  padding: 25px;
+}
+
+/* HEADER (same as admin) */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  height: 12vh;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+/* WELCOME TEXT */
+.welcome-text {
+  margin: 20px 0 0;
+  font-size: 15px;
+  color: #666;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+}

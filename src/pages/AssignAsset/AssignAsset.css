@@ -1,0 +1,120 @@
+.assign-container {
+  min-height: 100vh;
+  background: #f4f7fb;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.header h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* CARD */
+.assign-container > .card {
+  max-width: 900px;
+  margin: 0 auto 20px auto;
+}
+
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
+
+/* FORM */
+.form-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+input {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+input:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+/* BUTTON BASE */
+.btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+/* PRIMARY */
+.btn.primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #357abd;
+}
+
+/* RETURN BUTTON */
+.btn.small.success {
+  background: #22c55e;
+  color: white;
+}
+
+.btn.small.success:hover {
+  background: #16a34a;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th {
+  background: #f9fafb;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* STATUS */
+.status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.active {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.returned {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.empty {
+  text-align: center;
+  color: #888;
+  padding: 15px;
+}
