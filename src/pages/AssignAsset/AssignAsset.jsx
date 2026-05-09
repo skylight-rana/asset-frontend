@@ -17,18 +17,34 @@ function AssignAsset() {
   const [assignData, setAssignData] = useState({
     assetId: "",
     employeeId: "",
-    conditionAtIssue: "",
-    expectedReturnDate: ""
+    conditionAtIssue: ""
   });
 
+  // LOAD ASSIGNMENTS
   const loadAssignments = async () => {
+
     setLoading(true);
+
     try {
+
       const res = await getAssignments();
-      setAssignments(res.data);
+
+      // UPDATE UI IMMEDIATELY AFTER RETURN
+      const updatedAssignments = res.data.map(a => ({
+        ...a,
+        isReturned:
+          a.actualReturnDate ||
+          a.status === "Returned"
+      }));
+
+      setAssignments(updatedAssignments);
+
     } catch (err) {
+
       console.error(err);
+
     }
+
     setLoading(false);
   };
 
@@ -36,53 +52,86 @@ function AssignAsset() {
     loadAssignments();
   }, []);
 
+  // ASSIGN ASSET
   const handleAssign = async () => {
+
     if (!assignData.assetId || !assignData.employeeId) {
       alert("Asset & Employee required");
       return;
     }
 
     try {
+
       await assignAsset(assignData);
+
+      alert("Asset assigned successfully");
 
       setAssignData({
         assetId: "",
         employeeId: "",
-        conditionAtIssue: "",
-        expectedReturnDate: ""
+        conditionAtIssue: ""
       });
 
       loadAssignments();
-    } catch {
+
+    } catch (err) {
+
+      console.error(err);
       alert("Assignment failed");
+
     }
   };
 
-  const handleReturn = async (id) => {
+  // RETURN ASSET
+  const handleReturn = async (assignmentId) => {
+
     try {
+
       await returnAsset({
-        assignmentId: id,
+        assignmentId: assignmentId,
         conditionAtReturn: "Good"
       });
 
-      loadAssignments();
-    } catch {
+      alert("Asset returned successfully");
+
+      // UPDATE STATUS LOCALLY
+      setAssignments(prev =>
+        prev.map(a =>
+          (a.assignmentId || a.id) === assignmentId
+            ? {
+              ...a,
+              isReturned: true,
+              actualReturnDate: new Date()
+            }
+            : a
+        )
+      );
+
+    } catch (err) {
+
+      console.error(err);
       alert("Return failed");
+
     }
   };
 
+  // DATE FORMAT
   const formatDate = (date) => {
+
     if (!date) return "-";
+
     return new Date(date).toLocaleDateString();
   };
 
   return (
     <div className="assign-container">
 
+      {/* HEADER */}
       <div className="header">
         <h2>Asset Assignment</h2>
       </div>
 
+      {/* NAVBAR */}
       <Navbar />
 
       {/* FORM */}
@@ -96,7 +145,10 @@ function AssignAsset() {
             placeholder="Asset ID"
             value={assignData.assetId}
             onChange={e =>
-              setAssignData({ ...assignData, assetId: e.target.value })
+              setAssignData({
+                ...assignData,
+                assetId: e.target.value
+              })
             }
           />
 
@@ -104,7 +156,10 @@ function AssignAsset() {
             placeholder="Employee ID"
             value={assignData.employeeId}
             onChange={e =>
-              setAssignData({ ...assignData, employeeId: e.target.value })
+              setAssignData({
+                ...assignData,
+                employeeId: e.target.value
+              })
             }
           />
 
@@ -119,23 +174,17 @@ function AssignAsset() {
             }
           />
 
-          <input
-            type="date"
-            value={assignData.expectedReturnDate}
-            onChange={e =>
-              setAssignData({
-                ...assignData,
-                expectedReturnDate: e.target.value
-              })
-            }
-          />
-
         </div>
 
         <div className="btn-group">
-          <button className="btn primary" onClick={handleAssign}>
+
+          <button
+            className="btn primary"
+            onClick={handleAssign}
+          >
             Assign Asset
           </button>
+
         </div>
 
       </div>
@@ -143,56 +192,97 @@ function AssignAsset() {
       {/* TABLE */}
       <div className="card">
 
-        <h3>Assignment History ({assignments.length})</h3>
+        <h3>
+          Assignment History ({assignments.length})
+        </h3>
 
         {loading ? (
+
           <p className="empty">Loading...</p>
+
         ) : assignments.length === 0 ? (
-          <p className="empty">No assignments found</p>
+
+          <p className="empty">
+            No assignments found
+          </p>
+
         ) : (
+
           <table>
+
             <thead>
               <tr>
                 <th>Asset</th>
                 <th>Employee</th>
                 <th>Issued</th>
-                <th>Expected</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {assignments.map(a => (
-                <tr key={a.id}>
 
-                  <td>{a.assetName || a.assetId}</td>
-                  <td>{a.employeeName || a.employeeId}</td>
+              {assignments.map(a => {
 
-                  <td>{formatDate(a.issuedDate)}</td>
-                  <td>{formatDate(a.expectedReturnDate)}</td>
+                // CHECK RETURN STATUS
+                const isReturned =
+                  a.actualReturnDate ||
+                  a.returnDate ||
+                  a.status === "Returned";
 
-                  <td>
-                    <span className={`status ${a.actualReturnDate ? "returned" : "active"}`}>
-                      {a.actualReturnDate ? "Returned" : "Active"}
-                    </span>
-                  </td>
+                return (
+                  <tr key={a.assignmentId || a.id}>
 
-                  <td>
-                    {!a.actualReturnDate && (
-                      <button
-                        className="btn small success"
-                        onClick={() => handleReturn(a.id)}
+                    <td>
+                      {a.assetName || a.assetId}
+                    </td>
+
+                    <td>
+                      {a.employeeName || a.employeeId}
+                    </td>
+
+                    <td>
+                      {formatDate(a.issuedDate)}
+                    </td>
+
+                    <td>
+                      <span
+                        className={`status ${isReturned
+                            ? "returned"
+                            : "active"
+                          }`}
                       >
-                        Return
-                      </button>
-                    )}
-                  </td>
+                        {isReturned
+                          ? "Returned"
+                          : "Active"}
+                      </span>
+                    </td>
 
-                </tr>
-              ))}
+                    <td>
+
+                      {!isReturned && (
+                        <button
+                          className="btn small success"
+                          onClick={() =>
+                            handleReturn(
+                              a.assignmentId || a.id
+                            )
+                          }
+                        >
+                          Return
+                        </button>
+                      )}
+
+                    </td>
+
+                  </tr>
+                );
+              })}
+
             </tbody>
+
           </table>
+
         )}
 
       </div>

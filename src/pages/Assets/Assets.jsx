@@ -4,7 +4,6 @@ import Navbar from "../../components/Navbar/Navbar";
 import {
   getAssets,
   createAsset,
-  updateAsset,
   deleteAsset
 } from "../../services/assetService";
 
@@ -21,8 +20,7 @@ function Assets() {
     serialNumber: ""
   });
 
-  const [editId, setEditId] = useState(null);
-
+  // LOAD ASSETS
   const loadAssets = async () => {
     try {
       const res = await getAssets();
@@ -36,6 +34,7 @@ function Assets() {
     loadAssets();
   }, []);
 
+  // ADD ASSET
   const handleSubmit = async () => {
 
     if (!form.name || !form.type || !form.serialNumber) {
@@ -44,43 +43,40 @@ function Assets() {
     }
 
     try {
-      if (editId) {
-        await updateAsset(editId, form);
-        setEditId(null);
-      } else {
-        await createAsset(form);
-      }
 
-      setForm({ name: "", type: "", serialNumber: "" });
+      await createAsset(form);
+
+      setForm({
+        name: "",
+        type: "",
+        serialNumber: ""
+      });
+
       loadAssets();
 
     } catch (err) {
       console.error(err);
-      alert("Operation failed");
+      alert("Failed to add asset");
     }
   };
 
-  const handleEdit = (asset) => {
-    setForm({
-      name: asset.name,
-      type: asset.type,
-      serialNumber: asset.serialNumber
-    });
-    setEditId(asset.id);
-  };
-
+  // DELETE
   const handleDelete = async (id) => {
+
     if (window.confirm("Delete this asset?")) {
-      await deleteAsset(id);
-      loadAssets();
+
+      try {
+        await deleteAsset(id);
+        loadAssets();
+      } catch (err) {
+        console.error(err);
+        alert("Delete failed");
+      }
+
     }
   };
 
-  const handleCancel = () => {
-    setEditId(null);
-    setForm({ name: "", type: "", serialNumber: "" });
-  };
-
+  // SEARCH FILTER
   const filteredAssets = assets.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.type.toLowerCase().includes(search.toLowerCase())
@@ -109,49 +105,56 @@ function Assets() {
 
       {/* FORM */}
       <div className="card">
-        <h3>{editId ? "Edit Asset" : "Add Asset"}</h3>
+
+        <h3>Add Asset</h3>
 
         <div className="form-group">
+
           <input
             placeholder="Asset Name"
             value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
+            onChange={e =>
+              setForm({ ...form, name: e.target.value })
+            }
           />
 
           <select
             value={form.type}
-            onChange={e => setForm({ ...form, type: e.target.value })}
+            onChange={e =>
+              setForm({ ...form, type: e.target.value })
+            }
           >
             <option value="">Select Type</option>
-            <option>Laptop</option>
-            <option>Monitor</option>
-            <option>Keyboard</option>
-            <option>Mouse</option>
-            <option>Mobile</option>
-            <option>Printer</option>
-            <option>Software License</option>
+            <option value="Hardware">Hardware</option>
+            <option value="Storage">Storage</option>
+            <option value="Accessory">Accessory</option>
+            <option value="Software License">
+              Software License
+            </option>
           </select>
 
           <input
             placeholder="Serial Number"
             value={form.serialNumber}
             onChange={e =>
-              setForm({ ...form, serialNumber: e.target.value })
+              setForm({
+                ...form,
+                serialNumber: e.target.value
+              })
             }
           />
+
         </div>
 
         <div className="btn-group">
-          <button className="btn primary" onClick={handleSubmit}>
-            {editId ? "Update" : "Add"}
+          <button
+            className="btn primary"
+            onClick={handleSubmit}
+          >
+            Add Asset
           </button>
-
-          {editId && (
-            <button className="btn cancel" onClick={handleCancel}>
-              Cancel
-            </button>
-          )}
         </div>
+
       </div>
 
       {/* TABLE */}
@@ -163,6 +166,7 @@ function Assets() {
           <p className="empty">No assets found</p>
         ) : (
           <table>
+
             <thead>
               <tr>
                 <th>Name</th>
@@ -174,26 +178,27 @@ function Assets() {
             </thead>
 
             <tbody>
+
               {filteredAssets.map(a => (
                 <tr key={a.id}>
+
                   <td>{a.name}</td>
                   <td>{a.type}</td>
                   <td>{a.serialNumber}</td>
 
                   <td>
-                    <span className={`status ${a.status === "Available" ? "available" : "assigned"}`}>
+                    <span
+                      className={`status ${
+                        a.status === "Available"
+                          ? "available"
+                          : "assigned"
+                      }`}
+                    >
                       {a.status}
                     </span>
                   </td>
 
                   <td>
-                    <button
-                      className="btn small edit"
-                      onClick={() => handleEdit(a)}
-                    >
-                      Edit
-                    </button>
-
                     <button
                       className="btn small delete"
                       onClick={() => handleDelete(a.id)}
@@ -204,7 +209,9 @@ function Assets() {
 
                 </tr>
               ))}
+
             </tbody>
+
           </table>
         )}
 

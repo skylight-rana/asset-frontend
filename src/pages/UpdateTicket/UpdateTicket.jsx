@@ -17,21 +17,32 @@ function UpdateTicket() {
     resolutionNotes: ""
   });
 
+  // LOAD TICKETS
   const loadTickets = async () => {
+
     setLoading(true);
+
     try {
+
       const res = await getTickets();
       setTickets(res.data);
+
     } catch (err) {
-      console.error(err);
+
+      console.error("Error loading tickets:", err);
+
+    } finally {
+
+      setLoading(false);
+
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     loadTickets();
   }, []);
 
+  // UPDATE TICKET
   const handleSubmit = async () => {
 
     if (!form.ticketId || !form.status) {
@@ -40,13 +51,20 @@ function UpdateTicket() {
     }
 
     try {
-      await updateTicketStatus({
-        ticketId: Number(form.ticketId),
-        status: form.status,
-        resolutionNotes: form.resolutionNotes
-      });
 
-      alert("Ticket updated");
+      const payload = {
+        ticketId: parseInt(form.ticketId),
+        status: form.status,
+        resolutionNotes: form.resolutionNotes || ""
+      };
+
+      console.log("Payload:", payload);
+
+      const res = await updateTicketStatus(payload);
+
+      console.log("Update Response:", res.data);
+
+      alert("Ticket updated successfully");
 
       setForm({
         ticketId: "",
@@ -56,8 +74,25 @@ function UpdateTicket() {
 
       loadTickets();
 
-    } catch {
-      alert("Update failed");
+    } catch (err) {
+
+      console.error("FULL ERROR:", err);
+
+      if (err.response) {
+
+        console.log("Backend Error:", err.response.data);
+        console.log("Status Code:", err.response.status);
+
+        alert(
+          err.response.data?.message ||
+          "Backend validation failed"
+        );
+
+      } else {
+
+        alert("Update failed");
+
+      }
     }
   };
 
@@ -80,34 +115,70 @@ function UpdateTicket() {
         <div className="form-group">
 
           <input
+            type="number"
             placeholder="Ticket ID"
             value={form.ticketId}
-            onChange={e => setForm({ ...form, ticketId: e.target.value })}
+            onChange={e =>
+              setForm({
+                ...form,
+                ticketId: e.target.value
+              })
+            }
           />
 
           <select
             value={form.status}
-            onChange={e => setForm({ ...form, status: e.target.value })}
+            onChange={e =>
+              setForm({
+                ...form,
+                status: e.target.value
+              })
+            }
           >
-            <option value="">Select Status</option>
-            <option value="Open">Open</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Closed">Closed</option>
+            <option value="">
+              Select Status
+            </option>
+
+            <option value="Open">
+              Open
+            </option>
+
+            <option value="In Progress">
+              In Progress
+            </option>
+
+            <option value="Resolved">
+              Resolved
+            </option>
+
+            <option value="Closed">
+              Closed
+            </option>
+
           </select>
 
           <input
             placeholder="Resolution Notes"
             value={form.resolutionNotes}
-            onChange={e => setForm({ ...form, resolutionNotes: e.target.value })}
+            onChange={e =>
+              setForm({
+                ...form,
+                resolutionNotes: e.target.value
+              })
+            }
           />
 
         </div>
 
         <div className="btn-group">
-          <button className="btn primary" onClick={handleSubmit}>
+
+          <button
+            className="btn primary"
+            onClick={handleSubmit}
+          >
             Update Ticket
           </button>
+
         </div>
 
       </div>
@@ -115,14 +186,26 @@ function UpdateTicket() {
       {/* TABLE */}
       <div className="card">
 
-        <h3>All Tickets ({tickets.length})</h3>
+        <h3>
+          All Tickets ({tickets.length})
+        </h3>
 
         {loading ? (
-          <p className="empty">Loading...</p>
+
+          <p className="empty">
+            Loading...
+          </p>
+
         ) : tickets.length === 0 ? (
-          <p className="empty">No tickets found</p>
+
+          <p className="empty">
+            No tickets found
+          </p>
+
         ) : (
+
           <table>
+
             <thead>
               <tr>
                 <th>ID</th>
@@ -132,27 +215,39 @@ function UpdateTicket() {
             </thead>
 
             <tbody>
+
               {tickets.map(t => (
+
                 <tr key={t.id}>
+
                   <td>#{t.id}</td>
+
                   <td>{t.issueDescription}</td>
 
                   <td>
-                    <span className={`status ${
-                      t.status === "Open"
-                        ? "open"
-                        : t.status === "InProgress"
-                        ? "progress"
-                        : "closed"
-                    }`}>
+
+                    <span
+                      className={`status ${
+                        t.status === "Open"
+                          ? "open"
+                          : t.status === "In Progress"
+                          ? "progress"
+                          : "closed"
+                      }`}
+                    >
                       {t.status}
                     </span>
+
                   </td>
+
                 </tr>
+
               ))}
+
             </tbody>
 
           </table>
+
         )}
 
       </div>
