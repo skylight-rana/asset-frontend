@@ -143,7 +143,7 @@ function UpdateTicket() {
               Open
             </option>
 
-            <option value="In Progress">
+            <option value="InProgress">
               In Progress
             </option>
 
@@ -230,7 +230,7 @@ function UpdateTicket() {
                       className={`status ${
                         t.status === "Open"
                           ? "open"
-                          : t.status === "In Progress"
+                          : t.status === "InProgress"
                           ? "progress"
                           : "closed"
                       }`}

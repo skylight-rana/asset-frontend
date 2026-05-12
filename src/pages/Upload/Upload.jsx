@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { uploadDocument } from "../../services/documentService";
+// import { uploadDocument } from "../../services/documentService";
 import Navbar from "../../components/Navbar/Navbar";
 
 import "./Upload.css";
@@ -7,6 +7,7 @@ import "./Upload.css";
 function Upload() {
 
   const [file, setFile] = useState(null);
+
   const [fileKey, setFileKey] = useState(Date.now());
 
   const [assetId, setAssetId] = useState("");
@@ -17,8 +18,10 @@ function Upload() {
   const handleUpload = async () => {
 
     if (!file || !assetId.trim()) {
+
       alert("Please select file and enter Asset ID");
       return;
+
     }
 
     try {
@@ -27,38 +30,44 @@ function Upload() {
 
       const formData = new FormData();
 
-      // FILE
+      // EXACT FIELD NAMES
       formData.append("file", file);
 
-      // ASSET ID AS NUMBER
       formData.append(
         "assetId",
-        Number(assetId)
+        assetId
       );
 
-      console.log(
-        "Uploading Asset ID:",
-        Number(assetId)
+      console.log("Asset ID:", assetId);
+
+      const response = await fetch(
+        "https://localhost:7117/api/assetdocument/upload",
+        {
+          method: "POST",
+          body: formData
+        }
       );
 
-      await uploadDocument(formData);
+      const result = await response.text();
+
+      console.log(result);
+
+      if (!response.ok) {
+        throw new Error(result);
+      }
 
       alert("File uploaded successfully");
 
-      // RESET FORM
+      // RESET
       setFile(null);
       setAssetId("");
       setFileKey(Date.now());
 
     } catch (err) {
 
-      console.error("Upload Error:", err);
+      console.error(err);
 
-      if (err.response) {
-        console.log(err.response.data);
-      }
-
-      alert("Upload failed");
+      alert(err.message || "Upload failed");
 
     } finally {
 

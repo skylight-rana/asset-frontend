@@ -53,10 +53,30 @@ function AssignAsset() {
   }, []);
 
   // ASSIGN ASSET
+  // ASSIGN ASSET
   const handleAssign = async () => {
 
     if (!assignData.assetId || !assignData.employeeId) {
       alert("Asset & Employee required");
+      return;
+    }
+
+    // CHECK IF ASSET IS ALREADY ASSIGNED
+    const alreadyAssigned = assignments.some(a => {
+
+      const isReturned =
+        a.actualReturnDate ||
+        a.returnDate ||
+        a.status === "Returned";
+
+      return (
+        String(a.assetId) === String(assignData.assetId) &&
+        !isReturned
+      );
+    });
+
+    if (alreadyAssigned) {
+      alert("This asset is already assigned and not yet returned");
       return;
     }
 
@@ -248,8 +268,8 @@ function AssignAsset() {
                     <td>
                       <span
                         className={`status ${isReturned
-                            ? "returned"
-                            : "active"
+                          ? "returned"
+                          : "active"
                           }`}
                       >
                         {isReturned
