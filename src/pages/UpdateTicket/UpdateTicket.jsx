@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { updateTicketStatus } from "../../services/adminService";
-import { getTickets } from "../../services/ticketService";
+import Sidebar from "../../components/Sidebar/Sidebar";
 
-import Navbar from "../../components/Navbar/Navbar";
+import {
+  getTickets,
+  updateTicket
+} from "../../services/ticketService";
 
 import "./UpdateTicket.css";
 
@@ -11,11 +13,8 @@ function UpdateTicket() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    ticketId: "",
-    status: "",
-    resolutionNotes: ""
-  });
+  const [ticketId, setTicketId] = useState("");
+  const [newStatus, setNewStatus] = useState("InProgress");
 
   // LOAD TICKETS
   const loadTickets = async () => {
@@ -29,7 +28,7 @@ function UpdateTicket() {
 
     } catch (err) {
 
-      console.error("Error loading tickets:", err);
+      console.error(err);
 
     } finally {
 
@@ -39,216 +38,285 @@ function UpdateTicket() {
   };
 
   useEffect(() => {
+
     loadTickets();
+
   }, []);
 
   // UPDATE TICKET
-  const handleSubmit = async () => {
+  const handleUpdate = async () => {
 
-    if (!form.ticketId || !form.status) {
-      alert("Ticket ID and Status are required");
+    if (!ticketId.trim()) {
+
+      alert("Please enter Ticket ID");
       return;
+
     }
 
     try {
 
-      const payload = {
-        ticketId: parseInt(form.ticketId),
-        status: form.status,
-        resolutionNotes: form.resolutionNotes || ""
-      };
-
-      console.log("Payload:", payload);
-
-      const res = await updateTicketStatus(payload);
-
-      console.log("Update Response:", res.data);
-
-      alert("Ticket updated successfully");
-
-      setForm({
-        ticketId: "",
-        status: "",
+      await updateTicket(ticketId, {
+        status: newStatus,
         resolutionNotes: ""
       });
+
+      alert("Ticket updated");
+
+      setTicketId("");
+      setNewStatus("InProgress");
 
       loadTickets();
 
     } catch (err) {
 
-      console.error("FULL ERROR:", err);
+      console.error(err);
 
-      if (err.response) {
+      alert("Update failed");
 
-        console.log("Backend Error:", err.response.data);
-        console.log("Status Code:", err.response.status);
-
-        alert(
-          err.response.data?.message ||
-          "Backend validation failed"
-        );
-
-      } else {
-
-        alert("Update failed");
-
-      }
     }
   };
 
+  // STATUS BADGE
+  const statusBadge = (status) => {
+
+    if (status === "Open") {
+      return "badge-warn";
+    }
+
+    if (status === "InProgress") {
+      return "badge-blue";
+    }
+
+    return "badge-green";
+  };
+
   return (
-    <div className="update-container">
+    <div className="app-layout">
 
-      {/* HEADER */}
-      <div className="header">
-        <h2>Update Ticket</h2>
-      </div>
+      {/* SIDEBAR */}
+      <Sidebar role="Admin" />
 
-      {/* NAVBAR */}
-      <Navbar />
+      <div className="main">
 
-      {/* FORM */}
-      <div className="card">
+        {/* TOP HEADER */}
+        <header className="top-header">
 
-        <h3>Update Ticket Status</h3>
+          <span className="page-title">
+            Tickets
+          </span>
 
-        <div className="form-group">
+          <div className="header-spacer" />
 
-          <input
-            type="number"
-            placeholder="Ticket ID"
-            value={form.ticketId}
-            onChange={e =>
-              setForm({
-                ...form,
-                ticketId: e.target.value
-              })
-            }
-          />
+        </header>
 
-          <select
-            value={form.status}
-            onChange={e =>
-              setForm({
-                ...form,
-                status: e.target.value
-              })
-            }
+        <div className="content">
+
+          {/* PAGE HEADER */}
+          <div className="page-header">
+
+            <h1>
+              Update Ticket
+            </h1>
+
+          </div>
+
+          {/* UPDATE FORM */}
+          <div
+            className="card"
+            style={{ marginBottom: 24 }}
           >
-            <option value="">
-              Select Status
-            </option>
 
-            <option value="Open">
-              Open
-            </option>
+            <div className="section-title">
 
-            <option value="InProgress">
-              In Progress
-            </option>
+              <i className="fas fa-pen-to-square text-muted" />
 
-            <option value="Resolved">
-              Resolved
-            </option>
+              <span>
+                Change Ticket Status
+              </span>
 
-            <option value="Closed">
-              Closed
-            </option>
+            </div>
 
-          </select>
+            <div className="form-grid">
 
-          <input
-            placeholder="Resolution Notes"
-            value={form.resolutionNotes}
-            onChange={e =>
-              setForm({
-                ...form,
-                resolutionNotes: e.target.value
-              })
-            }
-          />
+              {/* TICKET ID */}
+              <div className="form-group">
+
+                <label className="form-label">
+                  Ticket ID *
+                </label>
+
+                <input
+                  className="form-control"
+                  placeholder="e.g. 3"
+                  value={ticketId}
+                  onChange={e =>
+                    setTicketId(e.target.value)
+                  }
+                />
+
+              </div>
+
+              {/* STATUS */}
+              <div className="form-group">
+
+                <label className="form-label">
+                  New Status
+                </label>
+
+                <select
+                  className="form-control"
+                  value={newStatus}
+                  onChange={e =>
+                    setNewStatus(e.target.value)
+                  }
+                >
+
+                  <option value="Open">
+                    Open
+                  </option>
+
+                  <option value="InProgress">
+                    In Progress
+                  </option>
+
+                  <option value="Resolved">
+                    Resolved
+                  </option>
+
+                  <option value="Closed">
+                    Closed
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
+
+            {/* BUTTON */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end"
+              }}
+            >
+
+              <button
+                className="btn btn-primary"
+                onClick={handleUpdate}
+              >
+
+                <i className="fas fa-check" />
+
+                {" "}
+                Update Status
+
+              </button>
+
+            </div>
+
+          </div>
+
+          {/* TICKETS TABLE */}
+          <div className="card">
+
+            <div className="section-title">
+
+              <i className="fas fa-ticket text-muted" />
+
+              <span>
+                All Tickets
+              </span>
+
+              {/* <span className="badge badge-gray">
+                {tickets.length}
+              </span> */}
+
+            </div>
+
+            {loading ? (
+
+              <div className="empty-state">
+
+                <i className="fas fa-spinner fa-spin" />
+
+                <p>
+                  Loading…
+                </p>
+
+              </div>
+
+            ) : tickets.length === 0 ? (
+
+              <div className="empty-state">
+
+                <i className="fas fa-inbox" />
+
+                <p>
+                  No tickets found.
+                </p>
+
+              </div>
+
+            ) : (
+
+              <div className="table-wrap">
+
+                <table>
+
+                  <thead>
+
+                    <tr>
+
+                      <th>ID</th>
+
+                      <th>Issue</th>
+
+                      <th>Status</th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {tickets.map(t => (
+
+                      <tr key={t.id}>
+
+                        <td className="td-mono">
+                          #{t.id}
+                        </td>
+
+                        <td>
+                          {t.issueDescription}
+                        </td>
+
+                        <td>
+
+                          <span
+                            className={`badge ${statusBadge(t.status)}`}
+                          >
+                            {t.status}
+                          </span>
+
+                        </td>
+
+                      </tr>
+
+                    ))}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            )}
+
+          </div>
 
         </div>
-
-        <div className="btn-group">
-
-          <button
-            className="btn primary"
-            onClick={handleSubmit}
-          >
-            Update Ticket
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* TABLE */}
-      <div className="card">
-
-        <h3>
-          All Tickets ({tickets.length})
-        </h3>
-
-        {loading ? (
-
-          <p className="empty">
-            Loading...
-          </p>
-
-        ) : tickets.length === 0 ? (
-
-          <p className="empty">
-            No tickets found
-          </p>
-
-        ) : (
-
-          <table>
-
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Issue</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {tickets.map(t => (
-
-                <tr key={t.id}>
-
-                  <td>#{t.id}</td>
-
-                  <td>{t.issueDescription}</td>
-
-                  <td>
-
-                    <span
-                      className={`status ${
-                        t.status === "Open"
-                          ? "open"
-                          : t.status === "InProgress"
-                          ? "progress"
-                          : "closed"
-                      }`}
-                    >
-                      {t.status}
-                    </span>
-
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        )}
 
       </div>
 

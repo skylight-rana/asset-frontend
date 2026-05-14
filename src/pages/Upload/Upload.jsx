@@ -1,153 +1,118 @@
 import { useState } from "react";
-// import { uploadDocument } from "../../services/documentService";
-import Navbar from "../../components/Navbar/Navbar";
-
+import Sidebar from "../../components/Sidebar/Sidebar";
 import "./Upload.css";
 
 function Upload() {
-
-  const [file, setFile] = useState(null);
-
+  const [file,    setFile]    = useState(null);
   const [fileKey, setFileKey] = useState(Date.now());
-
   const [assetId, setAssetId] = useState("");
-
   const [loading, setLoading] = useState(false);
 
-  // UPLOAD FILE
   const handleUpload = async () => {
-
-    if (!file || !assetId.trim()) {
-
-      alert("Please select file and enter Asset ID");
-      return;
-
-    }
-
+    if (!file || !assetId.trim()) { alert("Please select a file and enter Asset ID"); return; }
     try {
-
       setLoading(true);
-
       const formData = new FormData();
-
-      // EXACT FIELD NAMES
       formData.append("file", file);
-
-      formData.append(
-        "assetId",
-        assetId
-      );
-
-      console.log("Asset ID:", assetId);
-
-      const response = await fetch(
-        "https://localhost:7117/api/assetdocument/upload",
-        {
-          method: "POST",
-          body: formData
-        }
-      );
-
+      formData.append("assetId", assetId);
+      const response = await fetch("https://localhost:7117/api/assetdocument/upload", {
+        method: "POST", body: formData,
+      });
       const result = await response.text();
-
-      console.log(result);
-
-      if (!response.ok) {
-        throw new Error(result);
-      }
-
+      if (!response.ok) throw new Error(result);
       alert("File uploaded successfully");
-
-      // RESET
-      setFile(null);
-      setAssetId("");
-      setFileKey(Date.now());
-
+      setFile(null); setAssetId(""); setFileKey(Date.now());
     } catch (err) {
-
-      console.error(err);
-
       alert(err.message || "Upload failed");
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
   return (
-    <div className="upload-container">
+    <div className="app-layout">
+      <Sidebar role="Admin" />
+      <div className="main">
+        <header className="top-header">
+          <span className="page-title">Documents</span>
+          <div className="header-spacer" />
+        </header>
 
-      {/* HEADER */}
-      <div className="header">
-        <h2>Document Upload</h2>
-      </div>
+        <div className="content">
+          <div className="page-header">
+            <h1>Document Upload</h1>
+          </div>
 
-      {/* NAVBAR */}
-      <Navbar />
+          <div style={{ maxWidth: 600 }}>
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div className="section-title">
+                <i className="fas fa-upload text-muted" />
+                <span>Upload Asset Document</span>
+              </div>
 
-      {/* UPLOAD FORM */}
-      <div className="card">
+              <div className="form-group">
+                <label className="form-label">Asset ID *</label>
+                <input
+                  className="form-control"
+                  type="number"
+                  placeholder="Enter Asset ID"
+                  value={assetId}
+                  onChange={e => setAssetId(e.target.value)}
+                />
+              </div>
 
-        <h3>Upload Asset Document</h3>
+              <div className="form-group">
+                <label className="form-label">Document File *</label>
+                <div
+                  className="drop-zone"
+                  onClick={() => document.getElementById('file-input').click()}
+                >
+                  <input
+                    id="file-input"
+                    key={fileKey}
+                    type="file"
+                    style={{ display: 'none' }}
+                    onChange={e => setFile(e.target.files[0])}
+                  />
+                  <i className="fas fa-cloud-arrow-up drop-icon" />
+                  {file ? (
+                    <div>
+                      <p className="drop-label">{file.name}</p>
+                      <p className="drop-sub">{(file.size / 1024).toFixed(1)} KB — click to change</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="drop-label">Click to upload or drag & drop</p>
+                      <p className="drop-sub">PDF, PNG, JPG up to 10MB</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-        <div className="form-group">
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary" onClick={handleUpload} disabled={loading}>
+                  {loading
+                    ? <><i className="fas fa-spinner fa-spin" /> Uploading…</>
+                    : <><i className="fas fa-upload" /> Upload File</>
+                  }
+                </button>
+              </div>
+            </div>
 
-          {/* FILE INPUT */}
-          <input
-            key={fileKey}
-            type="file"
-            onChange={e =>
-              setFile(e.target.files[0])
-            }
-          />
-
-          {/* ASSET ID */}
-          <input
-            type="number"
-            placeholder="Enter Asset ID"
-            value={assetId}
-            onChange={e =>
-              setAssetId(e.target.value)
-            }
-          />
-
+            <div className="card">
+              <div className="section-title">
+                <i className="fas fa-circle-info text-muted" />
+                <span>Instructions</span>
+              </div>
+              <ul className="instruction-list">
+                <li>Enter a valid Asset ID before uploading</li>
+                <li>Accepted formats: PDF, PNG, JPG (max 10MB)</li>
+                <li>Click Upload to save the document to the asset record</li>
+              </ul>
+            </div>
+          </div>
         </div>
-
-        {/* FILE PREVIEW */}
-        {file && (
-          <p className="file-name">
-            Selected: <b>{file.name}</b>
-          </p>
-        )}
-
-        {/* BUTTON */}
-        <button
-          className="btn btn-primary"
-          onClick={handleUpload}
-          disabled={loading}
-        >
-          {loading
-            ? "Uploading..."
-            : "Upload File"}
-        </button>
-
       </div>
-
-      {/* INFO CARD */}
-      <div className="card">
-
-        <h3>Instructions</h3>
-
-        <ul>
-          <li>Enter valid Asset ID</li>
-          <li>Select a document file</li>
-          <li>Click upload to save document</li>
-        </ul>
-
-      </div>
-
     </div>
   );
 }

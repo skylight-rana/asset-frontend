@@ -1,35 +1,179 @@
-/* PAGE */
-.container {
-  background: #f1f5f9;
-  min-height: 100vh;
-  padding: 25px;
-}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* HEADER (same as admin) */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  height: 12vh;
-}
-
-.header h2 {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
 }
 
-/* WELCOME TEXT */
-.welcome-text {
-  margin: 20px 0 0;
-  font-size: 15px;
-  color: #666;
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e2e0d8;
+  --text: #1a1916;
+  --text2: #5c5a52;
+  --text3: #9c9a90;
+  --accent: #2a6496;
+  --accent-bg: #e8f1f8;
+  --sidebar-w: 240px;
+  --header-h: 60px;
+  --radius: 8px;
+  --radius-lg: 12px;
 }
 
-/* CARD */
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-header {
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 12px;
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.header-user i {
+  color: var(--text3);
+}
+
+.content {
+  flex: 1;
+  padding: 28px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 600px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.welcome-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.welcome-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.welcome-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.welcome-card p {
+  font-size: 13.5px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.quick-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.quick-link:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(42, 100, 150, 0.08);
+}
+
+.quick-link>i {
+  font-size: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.quick-link h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.quick-link p {
+  font-size: 13px;
+  color: var(--text2);
 }

@@ -1,312 +1,156 @@
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar/Navbar";
-
-import {
-  assignAsset,
-  returnAsset,
-  getAssignments
-} from "../../services/assignmentService";
-
+import Sidebar from "../../components/Sidebar/Sidebar";
+import { assignAsset, returnAsset, getAssignments } from "../../services/assignmentService";
 import "./AssignAsset.css";
 
 function AssignAsset() {
-
   const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading,     setLoading]     = useState(false);
+  const [assignData,  setAssignData]  = useState({ assetId: "", employeeId: "", conditionAtIssue: "" });
 
-  const [assignData, setAssignData] = useState({
-    assetId: "",
-    employeeId: "",
-    conditionAtIssue: ""
-  });
-
-  // LOAD ASSIGNMENTS
   const loadAssignments = async () => {
-
     setLoading(true);
-
     try {
-
       const res = await getAssignments();
-
-      // UPDATE UI IMMEDIATELY AFTER RETURN
-      const updatedAssignments = res.data.map(a => ({
+      setAssignments(res.data.map(a => ({
         ...a,
-        isReturned:
-          a.actualReturnDate ||
-          a.status === "Returned"
-      }));
-
-      setAssignments(updatedAssignments);
-
-    } catch (err) {
-
-      console.error(err);
-
-    }
-
+        isReturned: a.actualReturnDate || a.status === "Returned",
+      })));
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadAssignments();
-  }, []);
+  useEffect(() => { loadAssignments(); }, []);
 
-  // ASSIGN ASSET
-  // ASSIGN ASSET
   const handleAssign = async () => {
-
-    if (!assignData.assetId || !assignData.employeeId) {
-      alert("Asset & Employee required");
-      return;
-    }
-
-    // CHECK IF ASSET IS ALREADY ASSIGNED
+    if (!assignData.assetId || !assignData.employeeId) { alert("Asset & Employee required"); return; }
     const alreadyAssigned = assignments.some(a => {
-
-      const isReturned =
-        a.actualReturnDate ||
-        a.returnDate ||
-        a.status === "Returned";
-
-      return (
-        String(a.assetId) === String(assignData.assetId) &&
-        !isReturned
-      );
+      const returned = a.actualReturnDate || a.returnDate || a.status === "Returned";
+      return String(a.assetId) === String(assignData.assetId) && !returned;
     });
-
-    if (alreadyAssigned) {
-      alert("This asset is already assigned and not yet returned");
-      return;
-    }
-
+    if (alreadyAssigned) { alert("Asset already assigned and not yet returned"); return; }
     try {
-
       await assignAsset(assignData);
-
-      alert("Asset assigned successfully");
-
-      setAssignData({
-        assetId: "",
-        employeeId: "",
-        conditionAtIssue: ""
-      });
-
+      setAssignData({ assetId: "", employeeId: "", conditionAtIssue: "" });
       loadAssignments();
-
-    } catch (err) {
-
-      console.error(err);
-      alert("Assignment failed");
-
-    }
+    } catch { alert("Assignment failed"); }
   };
 
-  // RETURN ASSET
-  const handleReturn = async (assignmentId) => {
-
+  const handleReturn = async (id) => {
     try {
-
-      await returnAsset({
-        assignmentId: assignmentId,
-        conditionAtReturn: "Good"
-      });
-
-      alert("Asset returned successfully");
-
-      // UPDATE STATUS LOCALLY
+      await returnAsset({ assignmentId: id, conditionAtReturn: "Good" });
       setAssignments(prev =>
-        prev.map(a =>
-          (a.assignmentId || a.id) === assignmentId
-            ? {
-              ...a,
-              isReturned: true,
-              actualReturnDate: new Date()
-            }
-            : a
+        prev.map(a => (a.assignmentId || a.id) === id
+          ? { ...a, isReturned: true, actualReturnDate: new Date() }
+          : a
         )
       );
-
-    } catch (err) {
-
-      console.error(err);
-      alert("Return failed");
-
-    }
+    } catch { alert("Return failed"); }
   };
 
-  // DATE FORMAT
-  const formatDate = (date) => {
-
-    if (!date) return "-";
-
-    return new Date(date).toLocaleDateString();
-  };
+  const fmtDate = d => d ? new Date(d).toLocaleDateString() : "—";
 
   return (
-    <div className="assign-container">
+    <div className="app-layout">
+      <Sidebar role="Admin" />
+      <div className="main">
+        <header className="top-header">
+          <span className="page-title">Assignments</span>
+          <div className="header-spacer" />
+        </header>
 
-      {/* HEADER */}
-      <div className="header">
-        <h2>Asset Assignment</h2>
-      </div>
+        <div className="content">
+          <div className="page-header">
+            <h1>Asset Assignment</h1>
+          </div>
 
-      {/* NAVBAR */}
-      <Navbar />
+          {/* Assign form */}
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="section-title">
+              <i className="fas fa-link text-muted" />
+              <span>Assign Asset</span>
+            </div>
 
-      {/* FORM */}
-      <div className="card">
+            <div className="form-grid-3">
+              <div className="form-group">
+                <label className="form-label">Asset ID *</label>
+                <input className="form-control" placeholder="e.g. 1" value={assignData.assetId}
+                  onChange={e => setAssignData({ ...assignData, assetId: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Employee ID *</label>
+                <input className="form-control" placeholder="e.g. 5" value={assignData.employeeId}
+                  onChange={e => setAssignData({ ...assignData, employeeId: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Condition at Issue</label>
+                <input className="form-control" placeholder="e.g. Excellent" value={assignData.conditionAtIssue}
+                  onChange={e => setAssignData({ ...assignData, conditionAtIssue: e.target.value })} />
+              </div>
+            </div>
 
-        <h3>Assign Asset</h3>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={handleAssign}>
+                <i className="fas fa-link" /> Assign Asset
+              </button>
+            </div>
+          </div>
 
-        <div className="form-group">
+          {/* Assignment history */}
+          <div className="card">
+            <div className="section-title">
+              <i className="fas fa-clock-rotate-left text-muted" />
+              <span>Assignment History</span>
+              {/* <span className="badge badge-gray">{assignments.length}</span> */}
+            </div>
 
-          <input
-            placeholder="Asset ID"
-            value={assignData.assetId}
-            onChange={e =>
-              setAssignData({
-                ...assignData,
-                assetId: e.target.value
-              })
-            }
-          />
-
-          <input
-            placeholder="Employee ID"
-            value={assignData.employeeId}
-            onChange={e =>
-              setAssignData({
-                ...assignData,
-                employeeId: e.target.value
-              })
-            }
-          />
-
-          <input
-            placeholder="Condition"
-            value={assignData.conditionAtIssue}
-            onChange={e =>
-              setAssignData({
-                ...assignData,
-                conditionAtIssue: e.target.value
-              })
-            }
-          />
-
+            {loading ? (
+              <div className="empty-state"><i className="fas fa-spinner fa-spin" /><p>Loading…</p></div>
+            ) : assignments.length === 0 ? (
+              <div className="empty-state"><i className="fas fa-inbox" /><p>No assignments found.</p></div>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Employee</th>
+                      <th>Issued</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assignments.map(a => {
+                      const returned = a.actualReturnDate || a.returnDate || a.status === "Returned";
+                      return (
+                        <tr key={a.assignmentId || a.id}>
+                          <td style={{ fontWeight: 500 }}>{a.assetName || a.assetId}</td>
+                          <td>{a.employeeName || a.employeeId}</td>
+                          <td className="td-mono">{fmtDate(a.issuedDate)}</td>
+                          <td>
+                            <span className={`badge ${returned ? "badge-green" : "badge-warn"}`}>
+                              {returned ? "Returned" : "Active"}
+                            </span>
+                          </td>
+                          <td>
+                            {!returned && (
+                              <button className="btn btn-secondary btn-sm"
+                                onClick={() => handleReturn(a.assignmentId || a.id)}>
+                                <i className="fas fa-rotate-left" /> Return
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-
-        <div className="btn-group">
-
-          <button
-            className="btn primary"
-            onClick={handleAssign}
-          >
-            Assign Asset
-          </button>
-
-        </div>
-
       </div>
-
-      {/* TABLE */}
-      <div className="card">
-
-        <h3>
-          Assignment History ({assignments.length})
-        </h3>
-
-        {loading ? (
-
-          <p className="empty">Loading...</p>
-
-        ) : assignments.length === 0 ? (
-
-          <p className="empty">
-            No assignments found
-          </p>
-
-        ) : (
-
-          <table>
-
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th>Employee</th>
-                <th>Issued</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {assignments.map(a => {
-
-                // CHECK RETURN STATUS
-                const isReturned =
-                  a.actualReturnDate ||
-                  a.returnDate ||
-                  a.status === "Returned";
-
-                return (
-                  <tr key={a.assignmentId || a.id}>
-
-                    <td>
-                      {a.assetName || a.assetId}
-                    </td>
-
-                    <td>
-                      {a.employeeName || a.employeeId}
-                    </td>
-
-                    <td>
-                      {formatDate(a.issuedDate)}
-                    </td>
-
-                    <td>
-                      <span
-                        className={`status ${isReturned
-                          ? "returned"
-                          : "active"
-                          }`}
-                      >
-                        {isReturned
-                          ? "Returned"
-                          : "Active"}
-                      </span>
-                    </td>
-
-                    <td>
-
-                      {!isReturned && (
-                        <button
-                          className="btn small success"
-                          onClick={() =>
-                            handleReturn(
-                              a.assignmentId || a.id
-                            )
-                          }
-                        >
-                          Return
-                        </button>
-                      )}
-
-                    </td>
-
-                  </tr>
-                );
-              })}
-
-            </tbody>
-
-          </table>
-
-        )}
-
-      </div>
-
     </div>
   );
 }
