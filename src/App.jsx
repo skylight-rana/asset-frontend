@@ -11,17 +11,16 @@ import Tickets from "./pages/Tickets/Tickets";
 import Upload from "./pages/Upload/Upload";
 import UpdateTicket from "./pages/UpdateTicket/UpdateTicket";
 
+import { ROUTES } from "./constants/routes";
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path={ROUTES.LOGIN} element={<Login />} />
 
-        {/* PUBLIC */}
-        <Route path="/" element={<Login />} />
-
-        {/* ================= ADMIN ROUTES ================= */}
         <Route
-          path="/admin"
+          path={ROUTES.ADMIN_DASHBOARD}
           element={
             <ProtectedRoute role="Admin">
               <AdminDashboard />
@@ -30,7 +29,7 @@ function App() {
         />
 
         <Route
-          path="/assets"
+          path={ROUTES.ADMIN_ASSETS}
           element={
             <ProtectedRoute role="Admin">
               <Assets />
@@ -39,7 +38,7 @@ function App() {
         />
 
         <Route
-          path="/assign"
+          path={ROUTES.ADMIN_ASSIGNMENTS}
           element={
             <ProtectedRoute role="Admin">
               <AssignAsset />
@@ -48,7 +47,7 @@ function App() {
         />
 
         <Route
-          path="/updateticket"
+          path={ROUTES.ADMIN_TICKETS}
           element={
             <ProtectedRoute role="Admin">
               <UpdateTicket />
@@ -57,7 +56,7 @@ function App() {
         />
 
         <Route
-          path="/upload"
+          path={ROUTES.ADMIN_DOCUMENTS}
           element={
             <ProtectedRoute role="Admin">
               <Upload />
@@ -65,9 +64,8 @@ function App() {
           }
         />
 
-        {/* ================= EMPLOYEE ROUTES ================= */}
         <Route
-          path="/employee"
+          path={ROUTES.EMPLOYEE_DASHBOARD}
           element={
             <ProtectedRoute role="Employee">
               <EmployeeDashboard />
@@ -76,7 +74,7 @@ function App() {
         />
 
         <Route
-          path="/tickets"
+          path={ROUTES.EMPLOYEE_TICKETS}
           element={
             <ProtectedRoute role="Employee">
               <Tickets />
@@ -84,9 +82,7 @@ function App() {
           }
         />
 
-        {/* ================= FALLBACK ================= */}
-        <Route path="*" element={<Navigate to="/" />} />
-
+        <Route path="*" element={<Navigate to={ROUTES.LOGIN} />} />
       </Routes>
     </BrowserRouter>
   );

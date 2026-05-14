@@ -1,9 +1,9 @@
 import { useState } from "react";
-import Sidebar from "../../components/Sidebar/Sidebar";
+import DashboardLayout from "../../layouts/DashboardLayout";
 import "./Upload.css";
 
 function Upload() {
-  const [file,    setFile]    = useState(null);
+  const [file, setFile] = useState(null);
   const [fileKey, setFileKey] = useState(Date.now());
   const [assetId, setAssetId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,90 +30,83 @@ function Upload() {
   };
 
   return (
-    <div className="app-layout">
-      <Sidebar role="Admin" />
-      <div className="main">
-        <header className="top-header">
-          <span className="page-title">Documents</span>
-          <div className="header-spacer" />
-        </header>
+    <DashboardLayout role="Admin" title="Documents">
+      {/* page content */}
+      <div className="content">
+        <div className="page-header">
+          <h1>Document Upload</h1>
+        </div>
 
-        <div className="content">
-          <div className="page-header">
-            <h1>Document Upload</h1>
+        <div style={{ maxWidth: 600 }}>
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="section-title">
+              <i className="fas fa-upload text-muted" />
+              <span>Upload Asset Document</span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Asset ID *</label>
+              <input
+                className="form-control"
+                type="number"
+                placeholder="Enter Asset ID"
+                value={assetId}
+                onChange={e => setAssetId(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Document File *</label>
+              <div
+                className="drop-zone"
+                onClick={() => document.getElementById('file-input').click()}
+              >
+                <input
+                  id="file-input"
+                  key={fileKey}
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={e => setFile(e.target.files[0])}
+                />
+                <i className="fas fa-cloud-arrow-up drop-icon" />
+                {file ? (
+                  <div>
+                    <p className="drop-label">{file.name}</p>
+                    <p className="drop-sub">{(file.size / 1024).toFixed(1)} KB — click to change</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="drop-label">Click to upload or drag & drop</p>
+                    <p className="drop-sub">PDF, PNG, JPG up to 10MB</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={handleUpload} disabled={loading}>
+                {loading
+                  ? <><i className="fas fa-spinner fa-spin" /> Uploading…</>
+                  : <><i className="fas fa-upload" /> Upload File</>
+                }
+              </button>
+            </div>
           </div>
 
-          <div style={{ maxWidth: 600 }}>
-            <div className="card" style={{ marginBottom: 20 }}>
-              <div className="section-title">
-                <i className="fas fa-upload text-muted" />
-                <span>Upload Asset Document</span>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Asset ID *</label>
-                <input
-                  className="form-control"
-                  type="number"
-                  placeholder="Enter Asset ID"
-                  value={assetId}
-                  onChange={e => setAssetId(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Document File *</label>
-                <div
-                  className="drop-zone"
-                  onClick={() => document.getElementById('file-input').click()}
-                >
-                  <input
-                    id="file-input"
-                    key={fileKey}
-                    type="file"
-                    style={{ display: 'none' }}
-                    onChange={e => setFile(e.target.files[0])}
-                  />
-                  <i className="fas fa-cloud-arrow-up drop-icon" />
-                  {file ? (
-                    <div>
-                      <p className="drop-label">{file.name}</p>
-                      <p className="drop-sub">{(file.size / 1024).toFixed(1)} KB — click to change</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="drop-label">Click to upload or drag & drop</p>
-                      <p className="drop-sub">PDF, PNG, JPG up to 10MB</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="btn btn-primary" onClick={handleUpload} disabled={loading}>
-                  {loading
-                    ? <><i className="fas fa-spinner fa-spin" /> Uploading…</>
-                    : <><i className="fas fa-upload" /> Upload File</>
-                  }
-                </button>
-              </div>
+          <div className="card">
+            <div className="section-title">
+              <i className="fas fa-circle-info text-muted" />
+              <span>Instructions</span>
             </div>
-
-            <div className="card">
-              <div className="section-title">
-                <i className="fas fa-circle-info text-muted" />
-                <span>Instructions</span>
-              </div>
-              <ul className="instruction-list">
-                <li>Enter a valid Asset ID before uploading</li>
-                <li>Accepted formats: PDF, PNG, JPG (max 10MB)</li>
-                <li>Click Upload to save the document to the asset record</li>
-              </ul>
-            </div>
+            <ul className="instruction-list">
+              <li>Enter a valid Asset ID before uploading</li>
+              <li>Accepted formats: PDF, PNG, JPG (max 10MB)</li>
+              <li>Click Upload to save the document to the asset record</li>
+            </ul>
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

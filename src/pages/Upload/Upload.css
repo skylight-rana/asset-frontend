@@ -1,150 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-:root {
-  --bg: #f5f4f0;
-  --surface: #ffffff;
-  --surface2: #f0efe9;
-  --border: #e2e0d8;
-  --border2: #cccab8;
-  --text: #1a1916;
-  --text2: #5c5a52;
-  --text3: #9c9a90;
-  --accent: #2a6496;
-  --accent-bg: #e8f1f8;
-  --sidebar-w: 240px;
-  --header-h: 60px;
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-.main {
-  margin-left: var(--sidebar-w);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.top-header {
-  height: var(--header-h);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 28px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  gap: 12px;
-}
-
-.page-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.header-spacer {
-  flex: 1;
-}
-
-.content {
-  flex: 1;
-  padding: 28px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-}
-
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-title span {
-  flex: 1;
-}
-
-.text-muted {
-  color: var(--text3);
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-label {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text2);
-  margin-bottom: 6px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 13.5px;
-  font-family: inherit;
-  color: var(--text);
-  background: var(--surface);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.form-control:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(42, 100, 150, 0.1);
-}
-
-.form-control::placeholder {
-  color: var(--text3);
-}
-
-/* Drop zone */
 .drop-zone {
   border: 2px dashed var(--border2);
   border-radius: var(--radius-lg);
@@ -177,7 +30,6 @@ body {
   color: var(--text3);
 }
 
-/* Instructions */
 .instruction-list {
   list-style: none;
   display: flex;
@@ -197,7 +49,7 @@ body {
 }
 
 .instruction-list li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 7px;
@@ -205,33 +57,4 @@ body {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-
-.btn-primary {
-  background: var(--text);
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background: #333;
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }

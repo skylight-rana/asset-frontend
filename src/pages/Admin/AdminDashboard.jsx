@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
-import { getAssets }      from "../../services/assetService";
-import { getTickets }     from "../../services/ticketService";
+import { getAssets } from "../../services/assetService";
+import { getTickets } from "../../services/ticketService";
 import { getAssignments } from "../../services/assignmentService";
-import { getEmployees }   from "../../services/employeeService";
-import Sidebar             from "../../components/Sidebar/Sidebar";
+import { getEmployees } from "../../services/employeeService";
+import Sidebar from "../../components/Sidebar/Sidebar";
 import "./AdminDashboard.css";
 
 function AdminDashboard() {
-  const [assets,      setAssets]      = useState([]);
-  const [tickets,     setTickets]     = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [assignments, setAssignments] = useState([]);
-  const [employees,   setEmployees]   = useState([]);
-  const [user,        setUser]        = useState(null);
-  const [refreshing,  setRefreshing]  = useState(false);
-  const [search,      setSearch]      = useState("");
+  const [employees, setEmployees] = useState([]);
+  const [user, setUser] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadData();
-    try { setUser(JSON.parse(localStorage.getItem("user"))); } catch {}
+    try { setUser(JSON.parse(localStorage.getItem("user"))); } catch { }
   }, []);
 
   const loadData = async () => {

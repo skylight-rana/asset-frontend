@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import { assignAsset, returnAsset, getAssignments } from "../../services/assignmentService";
-import "./AssignAsset.css";
+import DashboardLayout from "../../layouts/DashboardLayout";
 
 function AssignAsset() {
   const [assignments, setAssignments] = useState([]);
-  const [loading,     setLoading]     = useState(false);
-  const [assignData,  setAssignData]  = useState({ assetId: "", employeeId: "", conditionAtIssue: "" });
+  const [loading, setLoading] = useState(false);
+  const [assignData, setAssignData] = useState({ assetId: "", employeeId: "", conditionAtIssue: "" });
 
   const loadAssignments = async () => {
     setLoading(true);
@@ -51,107 +51,101 @@ function AssignAsset() {
   const fmtDate = d => d ? new Date(d).toLocaleDateString() : "—";
 
   return (
-    <div className="app-layout">
-      <Sidebar role="Admin" />
-      <div className="main">
-        <header className="top-header">
-          <span className="page-title">Assignments</span>
-          <div className="header-spacer" />
-        </header>
 
-        <div className="content">
-          <div className="page-header">
-            <h1>Asset Assignment</h1>
+    <DashboardLayout role="Admin" title="Assignments">
+      {/* page content */}
+      <div className="content">
+        <div className="page-header">
+          <h1>Asset Assignment</h1>
+        </div>
+
+        {/* Assign form */}
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="section-title">
+            <i className="fas fa-link text-muted" />
+            <span>Assign Asset</span>
           </div>
 
-          {/* Assign form */}
-          <div className="card" style={{ marginBottom: 24 }}>
-            <div className="section-title">
-              <i className="fas fa-link text-muted" />
-              <span>Assign Asset</span>
+          <div className="form-grid-3">
+            <div className="form-group">
+              <label className="form-label">Asset ID *</label>
+              <input className="form-control" placeholder="e.g. 1" value={assignData.assetId}
+                onChange={e => setAssignData({ ...assignData, assetId: e.target.value })} />
             </div>
-
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label className="form-label">Asset ID *</label>
-                <input className="form-control" placeholder="e.g. 1" value={assignData.assetId}
-                  onChange={e => setAssignData({ ...assignData, assetId: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Employee ID *</label>
-                <input className="form-control" placeholder="e.g. 5" value={assignData.employeeId}
-                  onChange={e => setAssignData({ ...assignData, employeeId: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Condition at Issue</label>
-                <input className="form-control" placeholder="e.g. Excellent" value={assignData.conditionAtIssue}
-                  onChange={e => setAssignData({ ...assignData, conditionAtIssue: e.target.value })} />
-              </div>
+            <div className="form-group">
+              <label className="form-label">Employee ID *</label>
+              <input className="form-control" placeholder="e.g. 5" value={assignData.employeeId}
+                onChange={e => setAssignData({ ...assignData, employeeId: e.target.value })} />
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={handleAssign}>
-                <i className="fas fa-link" /> Assign Asset
-              </button>
+            <div className="form-group">
+              <label className="form-label">Condition at Issue</label>
+              <input className="form-control" placeholder="e.g. Excellent" value={assignData.conditionAtIssue}
+                onChange={e => setAssignData({ ...assignData, conditionAtIssue: e.target.value })} />
             </div>
           </div>
 
-          {/* Assignment history */}
-          <div className="card">
-            <div className="section-title">
-              <i className="fas fa-clock-rotate-left text-muted" />
-              <span>Assignment History</span>
-              {/* <span className="badge badge-gray">{assignments.length}</span> */}
-            </div>
-
-            {loading ? (
-              <div className="empty-state"><i className="fas fa-spinner fa-spin" /><p>Loading…</p></div>
-            ) : assignments.length === 0 ? (
-              <div className="empty-state"><i className="fas fa-inbox" /><p>No assignments found.</p></div>
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Asset</th>
-                      <th>Employee</th>
-                      <th>Issued</th>
-                      <th>Status</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assignments.map(a => {
-                      const returned = a.actualReturnDate || a.returnDate || a.status === "Returned";
-                      return (
-                        <tr key={a.assignmentId || a.id}>
-                          <td style={{ fontWeight: 500 }}>{a.assetName || a.assetId}</td>
-                          <td>{a.employeeName || a.employeeId}</td>
-                          <td className="td-mono">{fmtDate(a.issuedDate)}</td>
-                          <td>
-                            <span className={`badge ${returned ? "badge-green" : "badge-warn"}`}>
-                              {returned ? "Returned" : "Active"}
-                            </span>
-                          </td>
-                          <td>
-                            {!returned && (
-                              <button className="btn btn-secondary btn-sm"
-                                onClick={() => handleReturn(a.assignmentId || a.id)}>
-                                <i className="fas fa-rotate-left" /> Return
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-primary" onClick={handleAssign}>
+              <i className="fas fa-link" /> Assign Asset
+            </button>
           </div>
         </div>
+
+        {/* Assignment history */}
+        <div className="card">
+          <div className="section-title">
+            <i className="fas fa-clock-rotate-left text-muted" />
+            <span>Assignment History</span>
+            {/* <span className="badge badge-gray">{assignments.length}</span> */}
+          </div>
+
+          {loading ? (
+            <div className="empty-state"><i className="fas fa-spinner fa-spin" /><p>Loading…</p></div>
+          ) : assignments.length === 0 ? (
+            <div className="empty-state"><i className="fas fa-inbox" /><p>No assignments found.</p></div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Employee</th>
+                    <th>Issued</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignments.map(a => {
+                    const returned = a.actualReturnDate || a.returnDate || a.status === "Returned";
+                    return (
+                      <tr key={a.assignmentId || a.id}>
+                        <td style={{ fontWeight: 500 }}>{a.assetName || a.assetId}</td>
+                        <td>{a.employeeName || a.employeeId}</td>
+                        <td className="td-mono">{fmtDate(a.issuedDate)}</td>
+                        <td>
+                          <span className={`badge ${returned ? "badge-green" : "badge-warn"}`}>
+                            {returned ? "Returned" : "Active"}
+                          </span>
+                        </td>
+                        <td>
+                          {!returned && (
+                            <button className="btn btn-secondary btn-sm"
+                              onClick={() => handleReturn(a.assignmentId || a.id)}>
+                              <i className="fas fa-rotate-left" /> Return
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

@@ -1,0 +1,37 @@
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+
+  --border: #e2e0d8;
+  --border2: #cccab8;
+
+  --text: #1a1916;
+  --text2: #5c5a52;
+  --text3: #9c9a90;
+
+  --accent: #2a6496;
+  --accent-bg: #e8f1f8;
+  --accent-text: #1a4a70;
+
+  --success: #2d6a4f;
+  --success-bg: #e8f5ee;
+
+  --warn: #7c5c00;
+  --warn-bg: #fef6e0;
+
+  --danger: #8b2500;
+  --danger-bg: #fdeee9;
+
+  --purple: #4a3a8c;
+  --purple-bg: #eeeaf8;
+
+  --sidebar-w: 240px;
+  --header-h: 60px;
+
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --font-main: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+}

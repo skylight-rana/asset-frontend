@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../../components/Sidebar/Sidebar";
+import DashboardLayout from "../../layouts/DashboardLayout";
 
 import {
   getTickets,
@@ -91,236 +91,217 @@ function UpdateTicket() {
   };
 
   return (
-    <div className="app-layout">
+    <DashboardLayout role="Admin" title="Tickets">
+      {/* page content */}
+      <div className="content">
 
-      {/* SIDEBAR */}
-      <Sidebar role="Admin" />
+        {/* PAGE HEADER */}
+        <div className="page-header">
 
-      <div className="main">
+          <h1>
+            Update Ticket
+          </h1>
 
-        {/* TOP HEADER */}
-        <header className="top-header">
+        </div>
 
-          <span className="page-title">
-            Tickets
-          </span>
+        {/* UPDATE FORM */}
+        <div
+          className="card"
+          style={{ marginBottom: 24 }}
+        >
 
-          <div className="header-spacer" />
+          <div className="section-title">
 
-        </header>
+            <i className="fas fa-pen-to-square text-muted" />
 
-        <div className="content">
-
-          {/* PAGE HEADER */}
-          <div className="page-header">
-
-            <h1>
-              Update Ticket
-            </h1>
+            <span>
+              Change Ticket Status
+            </span>
 
           </div>
 
-          {/* UPDATE FORM */}
-          <div
-            className="card"
-            style={{ marginBottom: 24 }}
-          >
+          <div className="form-grid">
 
-            <div className="section-title">
+            {/* TICKET ID */}
+            <div className="form-group">
 
-              <i className="fas fa-pen-to-square text-muted" />
+              <label className="form-label">
+                Ticket ID *
+              </label>
 
-              <span>
-                Change Ticket Status
-              </span>
-
-            </div>
-
-            <div className="form-grid">
-
-              {/* TICKET ID */}
-              <div className="form-group">
-
-                <label className="form-label">
-                  Ticket ID *
-                </label>
-
-                <input
-                  className="form-control"
-                  placeholder="e.g. 3"
-                  value={ticketId}
-                  onChange={e =>
-                    setTicketId(e.target.value)
-                  }
-                />
-
-              </div>
-
-              {/* STATUS */}
-              <div className="form-group">
-
-                <label className="form-label">
-                  New Status
-                </label>
-
-                <select
-                  className="form-control"
-                  value={newStatus}
-                  onChange={e =>
-                    setNewStatus(e.target.value)
-                  }
-                >
-
-                  <option value="Open">
-                    Open
-                  </option>
-
-                  <option value="InProgress">
-                    In Progress
-                  </option>
-
-                  <option value="Resolved">
-                    Resolved
-                  </option>
-
-                  <option value="Closed">
-                    Closed
-                  </option>
-
-                </select>
-
-              </div>
+              <input
+                className="form-control"
+                placeholder="e.g. 3"
+                value={ticketId}
+                onChange={e =>
+                  setTicketId(e.target.value)
+                }
+              />
 
             </div>
 
-            {/* BUTTON */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end"
-              }}
-            >
+            {/* STATUS */}
+            <div className="form-group">
 
-              <button
-                className="btn btn-primary"
-                onClick={handleUpdate}
+              <label className="form-label">
+                New Status
+              </label>
+
+              <select
+                className="form-control"
+                value={newStatus}
+                onChange={e =>
+                  setNewStatus(e.target.value)
+                }
               >
 
-                <i className="fas fa-check" />
+                <option value="Open">
+                  Open
+                </option>
 
-                {" "}
-                Update Status
+                <option value="InProgress">
+                  In Progress
+                </option>
 
-              </button>
+                <option value="Resolved">
+                  Resolved
+                </option>
+
+                <option value="Closed">
+                  Closed
+                </option>
+
+              </select>
 
             </div>
 
           </div>
 
-          {/* TICKETS TABLE */}
-          <div className="card">
+          {/* BUTTON */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end"
+            }}
+          >
 
-            <div className="section-title">
+            <button
+              className="btn btn-primary"
+              onClick={handleUpdate}
+            >
 
-              <i className="fas fa-ticket text-muted" />
+              <i className="fas fa-check" />
 
-              <span>
-                All Tickets
-              </span>
+              {" "}
+              Update Status
 
-              {/* <span className="badge badge-gray">
-                {tickets.length}
-              </span> */}
-
-            </div>
-
-            {loading ? (
-
-              <div className="empty-state">
-
-                <i className="fas fa-spinner fa-spin" />
-
-                <p>
-                  Loading…
-                </p>
-
-              </div>
-
-            ) : tickets.length === 0 ? (
-
-              <div className="empty-state">
-
-                <i className="fas fa-inbox" />
-
-                <p>
-                  No tickets found.
-                </p>
-
-              </div>
-
-            ) : (
-
-              <div className="table-wrap">
-
-                <table>
-
-                  <thead>
-
-                    <tr>
-
-                      <th>ID</th>
-
-                      <th>Issue</th>
-
-                      <th>Status</th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody>
-
-                    {tickets.map(t => (
-
-                      <tr key={t.id}>
-
-                        <td className="td-mono">
-                          #{t.id}
-                        </td>
-
-                        <td>
-                          {t.issueDescription}
-                        </td>
-
-                        <td>
-
-                          <span
-                            className={`badge ${statusBadge(t.status)}`}
-                          >
-                            {t.status}
-                          </span>
-
-                        </td>
-
-                      </tr>
-
-                    ))}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )}
+            </button>
 
           </div>
 
         </div>
 
-      </div>
+        {/* TICKETS TABLE */}
+        <div className="card">
 
-    </div>
+          <div className="section-title">
+
+            <i className="fas fa-ticket text-muted" />
+
+            <span>
+              All Tickets
+            </span>
+
+            {/* <span className="badge badge-gray">
+                {tickets.length}
+              </span> */}
+
+          </div>
+
+          {loading ? (
+
+            <div className="empty-state">
+
+              <i className="fas fa-spinner fa-spin" />
+
+              <p>
+                Loading…
+              </p>
+
+            </div>
+
+          ) : tickets.length === 0 ? (
+
+            <div className="empty-state">
+
+              <i className="fas fa-inbox" />
+
+              <p>
+                No tickets found.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="table-wrap">
+
+              <table>
+
+                <thead>
+
+                  <tr>
+
+                    <th>ID</th>
+
+                    <th>Issue</th>
+
+                    <th>Status</th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {tickets.map(t => (
+
+                    <tr key={t.id}>
+
+                      <td className="td-mono">
+                        #{t.id}
+                      </td>
+
+                      <td>
+                        {t.issueDescription}
+                      </td>
+
+                      <td>
+
+                        <span
+                          className={`badge ${statusBadge(t.status)}`}
+                        >
+                          {t.status}
+                        </span>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </div>
+    </DashboardLayout>
   );
 }
 

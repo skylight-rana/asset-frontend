@@ -1,38 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-:root {
-  --bg: #f5f4f0;
-  --surface: #ffffff;
-  --surface2: #f0efe9;
-  --border: #e2e0d8;
-  --text: #1a1916;
-  --text2: #5c5a52;
-  --text3: #9c9a90;
-  --accent: #2a6496;
-  --accent-bg: #e8f1f8;
-  --danger: #8b2500;
-  --danger-bg: #fdeee9;
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-}
-
 /* Root */
+
 .login-root {
   min-height: 100vh;
   display: flex;
@@ -43,6 +10,7 @@ body {
 }
 
 /* Shell */
+
 .login-shell {
   display: flex;
   width: 100%;
@@ -54,7 +22,8 @@ body {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
 }
 
-/* Brand panel */
+/* Brand Panel */
+
 .brand-panel {
   width: 280px;
   flex-shrink: 0;
@@ -113,7 +82,8 @@ body {
   font-size: 13px;
 }
 
-/* Form panel */
+/* Form Panel */
+
 .form-panel {
   flex: 1;
   background: var(--surface);
@@ -145,6 +115,7 @@ body {
 }
 
 /* Error */
+
 .error-banner {
   display: flex;
   align-items: center;
@@ -158,18 +129,7 @@ body {
   margin-bottom: 20px;
 }
 
-/* Form groups */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-label {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text2);
-  margin-bottom: 6px;
-}
+/* Login Inputs */
 
 .input-row {
   position: relative;
@@ -185,30 +145,8 @@ body {
   pointer-events: none;
 }
 
-.form-control {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 13.5px;
-  font-family: inherit;
-  color: var(--text);
-  background: var(--surface);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
 .form-control.has-icon {
   padding-left: 34px;
-}
-
-.form-control:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(42, 100, 150, 0.1);
-}
-
-.form-control::placeholder {
-  color: var(--text3);
 }
 
 .toggle-pw {
@@ -216,7 +154,6 @@ body {
   right: 10px;
   background: none;
   border: none;
-  cursor: pointer;
   color: var(--text3);
   padding: 4px;
   font-size: 14px;
@@ -227,7 +164,8 @@ body {
   color: var(--accent);
 }
 
-/* Login button */
+/* Login Button */
+
 .login-btn {
   width: 100%;
   padding: 11px 16px;
@@ -235,8 +173,6 @@ body {
   color: #fff;
   border: none;
   border-radius: var(--radius);
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 500;
   display: flex;
@@ -257,6 +193,7 @@ body {
 }
 
 /* Help */
+
 .help-text {
   margin-top: 20px;
   font-size: 12px;
@@ -274,6 +211,7 @@ body {
 }
 
 /* Responsive */
+
 @media (max-width: 600px) {
   .brand-panel {
     display: none;

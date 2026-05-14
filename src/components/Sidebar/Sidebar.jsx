@@ -1,61 +1,142 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { logout } from "../../utils/auth";
+import { ROUTES } from "../../constants/routes";
 import "./Sidebar.css";
 
-// Admin nav items
+/* ================= ADMIN NAV ================= */
+
 const ADMIN_NAV = [
-  { section: "Overview", items: [
-    { to: "/admin", end: true, icon: "fa-house", label: "Dashboard" },
-  ]},
-  { section: "Asset Management", items: [
-    { to: "/assets",       icon: "fa-box",    label: "Assets" },
-    { to: "/assign",       icon: "fa-link",   label: "Assignments" },
-    { to: "/upload",       icon: "fa-file",   label: "Documents" },
-  ]},
-  { section: "Support", items: [
-    { to: "/updateticket", icon: "fa-ticket", label: "Tickets" },
-  ]},
+  {
+    section: "Overview",
+    items: [
+      {
+        to: ROUTES.ADMIN_DASHBOARD,
+        end: true,
+        icon: "fa-house",
+        label: "Dashboard",
+      },
+    ],
+  },
+
+  {
+    section: "Asset Management",
+    items: [
+      {
+        to: ROUTES.ADMIN_ASSETS,
+        icon: "fa-box",
+        label: "Assets",
+      },
+
+      {
+        to: ROUTES.ADMIN_ASSIGNMENTS,
+        icon: "fa-link",
+        label: "Assignments",
+      },
+
+      {
+        to: ROUTES.ADMIN_DOCUMENTS,
+        icon: "fa-file",
+        label: "Documents",
+      },
+    ],
+  },
+
+  {
+    section: "Support",
+    items: [
+      {
+        to: ROUTES.ADMIN_TICKETS,
+        icon: "fa-ticket",
+        label: "Tickets",
+      },
+    ],
+  },
 ];
 
-// Employee nav items
+/* ================= EMPLOYEE NAV ================= */
+
 const EMPLOYEE_NAV = [
-  { section: "My Workspace", items: [
-    { to: "/employee", end: true, icon: "fa-house",  label: "Dashboard" },
-  ]},
-  { section: "Support", items: [
-    { to: "/tickets", icon: "fa-ticket", label: "Raise / Track Tickets" },
-  ]},
+  {
+    section: "My Workspace",
+    items: [
+      {
+        to: ROUTES.EMPLOYEE_DASHBOARD,
+        end: true,
+        icon: "fa-house",
+        label: "Dashboard",
+      },
+    ],
+  },
+
+  {
+    section: "Support",
+    items: [
+      {
+        to: ROUTES.EMPLOYEE_TICKETS,
+        icon: "fa-ticket",
+        label: "Raise / Track Tickets",
+      },
+    ],
+  },
 ];
 
 function Sidebar({ role = "Admin" }) {
-  const navigate  = useNavigate();
-  const navConfig = role === "Employee" ? EMPLOYEE_NAV : ADMIN_NAV;
+  const navigate = useNavigate();
 
-  // Derive user initials from localStorage
+  const navConfig =
+    role === "Employee"
+      ? EMPLOYEE_NAV
+      : ADMIN_NAV;
+
+  /* ================= USER ================= */
+
   let user = null;
-  try { user = JSON.parse(localStorage.getItem("user")); } catch {}
+
+  try {
+    user = JSON.parse(localStorage.getItem("user"));
+  } catch {
+    localStorage.removeItem("user");
+  }
+
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
     : "??";
 
+  /* ================= LOGOUT ================= */
+
   const handleLogout = () => {
-    try { logout(); navigate("/"); } catch (err) { console.error(err); }
+    try {
+      logout();
+      navigate(ROUTES.LOGIN);
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  /* ================= UI ================= */
 
   return (
     <aside className="sidebar">
       {/* Brand */}
       <div className="sidebar-brand">
-        <div className="brand-logo">Asset<span>Manage</span></div>
-        <div className="brand-sub">IT Asset Management</div>
+        <div className="brand-logo">
+          Asset<span>Manage</span>
+        </div>
+
+        <div className="brand-sub">
+          IT Asset Management
+        </div>
       </div>
 
-      {/* Nav */}
+      {/* Navigation */}
       <nav className="sidebar-nav">
-        {navConfig.map(section => (
+        {navConfig.map((section) => (
           <div key={section.section}>
-            <div className="nav-section">{section.section}</div>
-            {section.items.map(item => (
+            <div className="nav-section">
+              {section.section}
+            </div>
+
+            {section.items.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -64,25 +145,39 @@ function Sidebar({ role = "Admin" }) {
                   `nav-item${isActive ? " active" : ""}`
                 }
               >
-                <i className={`fas ${item.icon}`}></i>
-                {item.label}
+                <i className={`fas ${item.icon}`} />
+
+                <span>{item.label}</span>
               </NavLink>
             ))}
           </div>
         ))}
       </nav>
 
-      {/* User footer */}
+      {/* Footer */}
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="user-avatar">{initials}</div>
+          <div className="user-avatar">
+            {initials}
+          </div>
+
           <div>
-            <div className="user-name">{user?.username || "User"}</div>
-            <div className="user-role">{role}</div>
+            <div className="user-name">
+              {user?.username || "User"}
+            </div>
+
+            <div className="user-role">
+              {role}
+            </div>
           </div>
         </div>
-        <button className="logout-btn" onClick={handleLogout} type="button">
-          <i className="fas fa-right-from-bracket"></i>
+
+        <button
+          className="logout-btn"
+          onClick={handleLogout}
+          type="button"
+        >
+          <i className="fas fa-right-from-bracket" />
           Logout
         </button>
       </div>

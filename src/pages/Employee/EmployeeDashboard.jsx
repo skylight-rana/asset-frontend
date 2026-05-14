@@ -6,7 +6,7 @@ function EmployeeDashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    try { setUser(JSON.parse(localStorage.getItem("user"))); } catch {}
+    try { setUser(JSON.parse(localStorage.getItem("user"))); } catch { }
   }, []);
 
   return (
