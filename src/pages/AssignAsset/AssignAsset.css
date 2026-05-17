@@ -1,5 +1,9 @@
-.update-ticket-card {
+.assignment-form-card {
   margin-bottom: 24px;
+}
+
+.asset-name {
+  font-weight: 500;
 }
 
 .form-actions-right {

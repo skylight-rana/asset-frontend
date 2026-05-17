@@ -1,28 +1,23 @@
 import { Navigate } from "react-router-dom";
+import { getUser } from "./auth";
+import { ROUTES } from "../constants/routes";
 
 function ProtectedRoute({ children, role }) {
+  const user = getUser();
 
-  // Get user from localStorage
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  // If not logged in
   if (!user) {
-    return <Navigate to="/" />;
+    return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
-  // Role check
   if (role && user.role !== role) {
-
-    // Admin trying employee page
-    if (user.role === "Admin") {
-      return <Navigate to="/admin" />;
-    }
-
-    // Employee trying admin page
-    return <Navigate to="/employee" />;
+    return (
+      <Navigate
+        to={user.role === "Admin" ? ROUTES.ADMIN_DASHBOARD : ROUTES.EMPLOYEE_DASHBOARD}
+        replace
+      />
+    );
   }
 
-  // Allow access
   return children;
 }
 

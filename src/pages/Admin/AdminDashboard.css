@@ -84,3 +84,6 @@
   background: var(--purple-bg);
   color: var(--purple);
 }
+.employee-name {
+  font-weight: 500;
+}

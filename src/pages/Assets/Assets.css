@@ -1,0 +1,16 @@
+.filter-bar-spaced {
+  margin-bottom: 20px;
+}
+
+.asset-list-card {
+  margin-bottom: 24px;
+}
+
+.asset-name {
+  font-weight: 500;
+}
+
+.form-actions-right {
+  display: flex;
+  justify-content: flex-end;
+}
