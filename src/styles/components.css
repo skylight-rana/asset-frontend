@@ -239,3 +239,36 @@ tr:hover td {
 .empty-state p {
     font-size: 14px;
 }
+/* Field-level validation */
+.form-control.is-invalid {
+    border-color: var(--danger);
+}
+
+.form-control.is-invalid:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(201, 69, 50, 0.1);
+}
+
+.field-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--danger);
+}
+
+.form-error-banner,
+.form-success-banner {
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.form-error-banner {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.form-success-banner {
+    background: var(--success-bg);
+    color: var(--success);
+}

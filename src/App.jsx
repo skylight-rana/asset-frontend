@@ -1,17 +1,26 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import Login from "./pages/Login/Login";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
-import EmployeeDashboard from "./pages/Employee/EmployeeDashboard";
+import { ROUTES } from "./constants";
+import {
+  AdminDashboard,
+  Assets,
+  AssignAsset,
+  EmployeeDashboard,
+  Login,
+  Tickets,
+  UpdateTicket,
+  Upload,
+  Users,
+} from "./pages";
 import ProtectedRoute from "./utils/ProtectedRoute";
 
-import Assets from "./pages/Assets/Assets";
-import AssignAsset from "./pages/AssignAsset/AssignAsset";
-import Tickets from "./pages/Tickets/Tickets";
-import Upload from "./pages/Upload/Upload";
-import UpdateTicket from "./pages/UpdateTicket/UpdateTicket";
-
-import { ROUTES } from "./constants/routes";
+function protectedPage(role, Component) {
+  return (
+    <ProtectedRoute role={role}>
+      <Component />
+    </ProtectedRoute>
+  );
+}
 
 function App() {
   return (
@@ -21,65 +30,36 @@ function App() {
 
         <Route
           path={ROUTES.ADMIN_DASHBOARD}
-          element={
-            <ProtectedRoute role="Admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Admin", AdminDashboard)}
         />
-
         <Route
           path={ROUTES.ADMIN_ASSETS}
-          element={
-            <ProtectedRoute role="Admin">
-              <Assets />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Admin", Assets)}
         />
-
         <Route
           path={ROUTES.ADMIN_ASSIGNMENTS}
-          element={
-            <ProtectedRoute role="Admin">
-              <AssignAsset />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Admin", AssignAsset)}
         />
-
         <Route
           path={ROUTES.ADMIN_TICKETS}
-          element={
-            <ProtectedRoute role="Admin">
-              <UpdateTicket />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Admin", UpdateTicket)}
         />
-
         <Route
           path={ROUTES.ADMIN_DOCUMENTS}
-          element={
-            <ProtectedRoute role="Admin">
-              <Upload />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Admin", Upload)}
+        />
+        <Route
+          path={ROUTES.ADMIN_USERS}
+          element={protectedPage("Admin", Users)}
         />
 
         <Route
           path={ROUTES.EMPLOYEE_DASHBOARD}
-          element={
-            <ProtectedRoute role="Employee">
-              <EmployeeDashboard />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Employee", EmployeeDashboard)}
         />
-
         <Route
           path={ROUTES.EMPLOYEE_TICKETS}
-          element={
-            <ProtectedRoute role="Employee">
-              <Tickets />
-            </ProtectedRoute>
-          }
+          element={protectedPage("Employee", Tickets)}
         />
 
         <Route path="*" element={<Navigate to={ROUTES.LOGIN} />} />

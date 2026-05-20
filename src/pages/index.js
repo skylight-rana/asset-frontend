@@ -1,0 +1,9 @@
+export { default as AdminDashboard } from "./Admin/AdminDashboard";
+export { default as Assets } from "./Assets/Assets";
+export { default as AssignAsset } from "./AssignAsset/AssignAsset";
+export { default as EmployeeDashboard } from "./Employee/EmployeeDashboard";
+export { default as Login } from "./Login/Login";
+export { default as Tickets } from "./Tickets/Tickets";
+export { default as UpdateTicket } from "./UpdateTicket/UpdateTicket";
+export { default as Upload } from "./Upload/Upload";
+export { default as Users } from "./Users/Users";

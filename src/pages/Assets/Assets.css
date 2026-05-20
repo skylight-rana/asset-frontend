@@ -6,11 +6,64 @@
   margin-bottom: 24px;
 }
 
-.asset-name {
+.asset-name,
+.employee-name {
   font-weight: 500;
 }
 
 .form-actions-right {
   display: flex;
   justify-content: flex-end;
+}
+
+.status-filter-header {
+  position: relative;
+  overflow: visible;
+}
+
+.status-filter-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.status-filter-overlay {
+  position: absolute;
+  top: 34px;
+  left: 12px;
+  z-index: 20;
+  min-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 10px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.filter-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.filter-check-row input {
+  accent-color: var(--accent);
+}
+
+.text-muted {
+  color: var(--text3);
 }

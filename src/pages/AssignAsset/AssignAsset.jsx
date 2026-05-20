@@ -1,39 +1,42 @@
 import { useEffect, useState } from "react";
 
-import DashboardLayout from "../../layouts/DashboardLayout";
-import {
-  assignAsset,
-  getAssignments,
-  returnAsset,
-} from "../../services/assignmentService";
+import { Pagination } from "../../components";
+import { DEFAULT_PAGE_SIZE, INITIAL_ASSIGNMENT_FORM } from "../../constants";
+import { DashboardLayout } from "../../layouts";
+import { assignAsset, getAssignments, returnAsset } from "../../services";
+import { formatDate, getApiErrorMessage, isReturned } from "../../utils";
 
 import "./AssignAsset.css";
-
-const INITIAL_ASSIGNMENT_FORM = {
-  assetId: "",
-  employeeId: "",
-  conditionAtIssue: "",
-};
 
 function AssignAsset() {
   const [assignments, setAssignments] = useState([]);
   const [assignData, setAssignData] = useState(INITIAL_ASSIGNMENT_FORM);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     loadAssignments();
   }, []);
 
-  const formatDate = (date) => {
-    return date ? new Date(date).toLocaleDateString() : "—";
-  };
-
   const normalizeAssignments = (data) => {
     return data.map((assignment) => ({
       ...assignment,
-      isReturned:
-        assignment.actualReturnDate || assignment.status === "Returned",
+      isReturned: isReturned(assignment),
     }));
+  };
+
+  const totalPages = Math.max(1, Math.ceil(assignments.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedAssignments = assignments.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setPage(1);
   };
 
   const handleChange = (e) => {
@@ -42,6 +45,12 @@ function AssignAsset() {
     setAssignData((prevData) => ({
       ...prevData,
       [name]: value,
+    }));
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: "",
+      form: "",
     }));
   };
 
@@ -52,36 +61,36 @@ function AssignAsset() {
       conditionAtIssue: assignData.conditionAtIssue.trim(),
     };
 
-    if (!payload.assetId || !payload.employeeId) {
-      alert("Asset & Employee required");
-      return;
+    const nextErrors = {};
+
+    if (!payload.assetId) nextErrors.assetId = "Asset ID is required.";
+    if (!payload.employeeId) nextErrors.employeeId = "Employee ID is required.";
+
+    if (payload.assetId && isAssetAlreadyAssigned()) {
+      nextErrors.assetId = "Asset is already assigned and not yet returned.";
     }
 
-    if (isAssetAlreadyAssigned()) {
-      alert("Asset already assigned and not yet returned");
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
     try {
       await assignAsset(payload);
       setAssignData(INITIAL_ASSIGNMENT_FORM);
+      setErrors({});
       loadAssignments();
     } catch (error) {
       console.error("Assignment failed", error);
-      alert("Assignment failed");
+      setErrors({ form: getApiErrorMessage(error, "Assignment failed.") });
     }
   };
 
   const isAssetAlreadyAssigned = () => {
     return assignments.some((assignment) => {
-      const isReturned =
-        assignment.actualReturnDate ||
-        assignment.returnDate ||
-        assignment.status === "Returned";
-
       return (
         String(assignment.assetId) === String(assignData.assetId) &&
-        !isReturned
+        !isReturned(assignment)
       );
     });
   };
@@ -119,7 +128,7 @@ function AssignAsset() {
       );
     } catch (error) {
       console.error("Return failed", error);
-      alert("Return failed");
+      setErrors({ form: getApiErrorMessage(error, "Return failed.") });
     }
   };
 
@@ -135,31 +144,35 @@ function AssignAsset() {
           <span>Assign Asset</span>
         </div>
 
+        {errors.form && <div className="form-error-banner">{errors.form}</div>}
+
         <div className="form-grid-3">
           <div className="form-group">
             <label className="form-label">Asset ID *</label>
 
             <input
-              className="form-control"
+              className={`form-control ${errors.assetId ? "is-invalid" : ""}`}
               type="text"
               name="assetId"
               placeholder="e.g. 1"
               value={assignData.assetId}
               onChange={handleChange}
             />
+            {errors.assetId && <p className="field-error">{errors.assetId}</p>}
           </div>
 
           <div className="form-group">
             <label className="form-label">Employee ID *</label>
 
             <input
-              className="form-control"
+              className={`form-control ${errors.employeeId ? "is-invalid" : ""}`}
               type="text"
               name="employeeId"
               placeholder="e.g. 5"
               value={assignData.employeeId}
               onChange={handleChange}
             />
+            {errors.employeeId && <p className="field-error">{errors.employeeId}</p>}
           </div>
 
           <div className="form-group">
@@ -205,50 +218,52 @@ function AssignAsset() {
             <table>
               <thead>
                 <tr>
-                  <th>Asset</th>
-                  <th>Employee</th>
+                  <th>Asset Name</th>
+                  <th>Employee Name</th>
                   <th>Issued</th>
+                  <th>Return Date</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                {assignments.map((assignment) => {
+                {paginatedAssignments.map((assignment) => {
                   const assignmentId =
                     assignment.assignmentId || assignment.id;
 
-                  const isReturned =
-                    assignment.actualReturnDate ||
-                    assignment.returnDate ||
-                    assignment.status === "Returned";
+                  const returned = isReturned(assignment);
 
                   return (
                     <tr key={assignmentId}>
                       <td className="asset-name">
-                        {assignment.assetName || assignment.assetId}
+                        {assignment.assetName || `Asset #${assignment.assetId}`}
                       </td>
 
                       <td>
-                        {assignment.employeeName || assignment.employeeId}
+                        {assignment.employeeName || `Employee #${assignment.employeeId}`}
                       </td>
 
                       <td className="td-mono">
                         {formatDate(assignment.issuedDate)}
                       </td>
 
+                      <td className="td-mono">
+                        {formatDate(assignment.returnDate || assignment.actualReturnDate)}
+                      </td>
+
                       <td>
                         <span
                           className={`badge ${
-                            isReturned ? "badge-green" : "badge-warn"
+                            returned ? "badge-green" : "badge-warn"
                           }`}
                         >
-                          {isReturned ? "Returned" : "Active"}
+                          {returned ? "Returned" : "Active"}
                         </span>
                       </td>
 
                       <td>
-                        {!isReturned && (
+                        {!returned && (
                           <button
                             type="button"
                             className="btn btn-secondary btn-sm"
@@ -264,6 +279,7 @@ function AssignAsset() {
                 })}
               </tbody>
             </table>
+            <Pagination page={currentPage} pageSize={pageSize} totalItems={assignments.length} onPageChange={setPage} onPageSizeChange={handlePageSizeChange} />
           </div>
         )}
       </div>

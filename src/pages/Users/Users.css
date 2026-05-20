@@ -1,0 +1,21 @@
+.user-form-card {
+  max-width: 980px;
+}
+
+.form-error-banner,
+.form-success-banner {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.form-error-banner {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.form-success-banner {
+  background: var(--success-bg);
+  color: var(--success);
+}

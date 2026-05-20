@@ -6,6 +6,7 @@ export const ROUTES = {
     ADMIN_ASSIGNMENTS: "/assign",
     ADMIN_TICKETS: "/updateticket",
     ADMIN_DOCUMENTS: "/upload",
+    ADMIN_USERS: "/users",
 
     EMPLOYEE_DASHBOARD: "/employee",
     EMPLOYEE_TICKETS: "/tickets",

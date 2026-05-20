@@ -6,3 +6,9 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.field-help {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text3);
+}

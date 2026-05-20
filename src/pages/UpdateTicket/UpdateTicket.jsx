@@ -1,35 +1,61 @@
 import { useEffect, useState } from "react";
 
-import DashboardLayout from "../../layouts/DashboardLayout";
-import { getTickets, updateTicket } from "../../services/ticketService";
+import { INITIAL_TICKET_STATUS, TICKET_STATUS_OPTIONS } from "../../constants";
+import { DashboardLayout } from "../../layouts";
+import { getEmployees, getTickets, updateTicket } from "../../services";
+import {
+  getApiErrorMessage,
+  getTicketEmployeeName,
+  getTicketStatusBadgeClass,
+} from "../../utils";
 
 import "./UpdateTicket.css";
 
-const INITIAL_STATUS = "InProgress";
-
-const STATUS_OPTIONS = [
-  { label: "Open", value: "Open" },
-  { label: "In Progress", value: "InProgress" },
-  { label: "Resolved", value: "Resolved" },
-  { label: "Closed", value: "Closed" },
-];
-
 function UpdateTicket() {
   const [tickets, setTickets] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [ticketId, setTicketId] = useState("");
-  const [newStatus, setNewStatus] = useState(INITIAL_STATUS);
+  const [newStatus, setNewStatus] = useState(INITIAL_TICKET_STATUS);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     loadTickets();
   }, []);
 
+  const loadTickets = async () => {
+    try {
+      setLoading(true);
+
+      const [ticketRes, employeeRes] = await Promise.all([
+        getTickets(),
+        getEmployees(),
+      ]);
+
+      setTickets(ticketRes.data || []);
+      setEmployees(employeeRes.data || []);
+    } catch (error) {
+      console.error("Failed to load tickets", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdate = async () => {
     const selectedTicketId = ticketId.trim();
+    const nextErrors = {};
 
     if (!selectedTicketId) {
-      alert("Please enter Ticket ID");
+      nextErrors.ticketId = "Ticket ID is required.";
+    }
+
+    if (!newStatus) {
+      nextErrors.status = "Please select a status.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
@@ -39,41 +65,19 @@ function UpdateTicket() {
         resolutionNotes: "",
       });
 
-      alert("Ticket updated");
-
       setTicketId("");
-      setNewStatus(INITIAL_STATUS);
+      setNewStatus(INITIAL_TICKET_STATUS);
+      setErrors({});
 
       loadTickets();
     } catch (error) {
       console.error("Failed to update ticket", error);
-      alert("Update failed");
-    }
-  };
-
-  const loadTickets = async () => {
-    try {
-      setLoading(true);
-
-      const res = await getTickets();
-      setTickets(res.data || []);
-    } catch (error) {
-      console.error("Failed to load tickets", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case "Open":
-        return "badge-warn";
-
-      case "InProgress":
-        return "badge-blue";
-
-      default:
-        return "badge-green";
+      setErrors({
+        form: getApiErrorMessage(
+          error,
+          "Update failed. Please check the ticket ID and try again."
+        ),
+      });
     }
   };
 
@@ -89,33 +93,53 @@ function UpdateTicket() {
           <span>Change Ticket Status</span>
         </div>
 
+        {errors.form && <div className="form-error-banner">{errors.form}</div>}
+
         <div className="form-grid">
           <div className="form-group">
             <label className="form-label">Ticket ID *</label>
 
             <input
-              className="form-control"
+              className={`form-control ${errors.ticketId ? "is-invalid" : ""}`}
               type="text"
               placeholder="e.g. 3"
               value={ticketId}
-              onChange={(e) => setTicketId(e.target.value)}
+              onChange={(e) => {
+                setTicketId(e.target.value);
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  ticketId: "",
+                  form: "",
+                }));
+              }}
             />
+            {errors.ticketId && (
+              <p className="field-error">{errors.ticketId}</p>
+            )}
           </div>
 
           <div className="form-group">
             <label className="form-label">New Status</label>
 
             <select
-              className="form-control"
+              className={`form-control ${errors.status ? "is-invalid" : ""}`}
               value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
+              onChange={(e) => {
+                setNewStatus(e.target.value);
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  status: "",
+                  form: "",
+                }));
+              }}
             >
-              {STATUS_OPTIONS.map((status) => (
+              {TICKET_STATUS_OPTIONS.map((status) => (
                 <option key={status.value} value={status.value}>
                   {status.label}
                 </option>
               ))}
             </select>
+            {errors.status && <p className="field-error">{errors.status}</p>}
           </div>
         </div>
 
@@ -153,6 +177,7 @@ function UpdateTicket() {
               <thead>
                 <tr>
                   <th>ID</th>
+                  <th>Employee Name</th>
                   <th>Issue</th>
                   <th>Status</th>
                 </tr>
@@ -163,11 +188,13 @@ function UpdateTicket() {
                   <tr key={ticket.id}>
                     <td className="td-mono">#{ticket.id}</td>
 
+                    <td>{getTicketEmployeeName(ticket, employees)}</td>
+
                     <td>{ticket.issueDescription}</td>
 
                     <td>
                       <span
-                        className={`badge ${getStatusBadgeClass(
+                        className={`badge ${getTicketStatusBadgeClass(
                           ticket.status
                         )}`}
                       >

@@ -69,3 +69,15 @@
 .dashboard-card-grid {
   margin-top: 20px;
 }
+.compact-dashboard-grid {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.dashboard-section-card {
+  margin-top: 20px;
+}
+
+.asset-name {
+  font-weight: 500;
+}

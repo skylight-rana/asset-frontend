@@ -1,36 +1,116 @@
-import { useState } from "react";
-import DashboardLayout from "../../layouts/DashboardLayout";
-import { uploadDocument } from "../../services/documentService";
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  ACCEPTED_DOCUMENT_TYPES,
+  MAX_UPLOAD_FILE_SIZE_BYTES,
+  MAX_UPLOAD_FILE_SIZE_MB,
+} from "../../constants";
+import { DashboardLayout } from "../../layouts";
+import { getAssets, uploadDocument } from "../../services";
+import { getApiErrorMessage } from "../../utils";
+
 import "./Upload.css";
 
+
 function Upload() {
+  const [assets, setAssets] = useState([]);
   const [file, setFile] = useState(null);
   const [fileKey, setFileKey] = useState(Date.now());
   const [assetId, setAssetId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingAssets, setLoadingAssets] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    loadAssets();
+  }, []);
+
+  const selectedAsset = useMemo(() => {
+    return assets.find((asset) => String(asset.id) === String(assetId));
+  }, [assets, assetId]);
+
+  const loadAssets = async () => {
+    try {
+      setLoadingAssets(true);
+
+      const res = await getAssets();
+      setAssets(res.data || []);
+    } catch (error) {
+      console.error("Failed to load assets", error);
+      setErrors((prev) => ({
+        ...prev,
+        assetId: "Unable to load assets. Please refresh the page.",
+      }));
+    } finally {
+      setLoadingAssets(false);
+    }
+  };
+
+  const validateForm = () => {
+    const nextErrors = {};
+
+    if (!assetId) {
+      nextErrors.assetId = "Please select an asset.";
+    } else if (!selectedAsset) {
+      nextErrors.assetId = "Selected asset was not found. Please choose again.";
+    }
+
+    if (!file) {
+      nextErrors.file = "Please select a file.";
+    } else if (file.size > MAX_UPLOAD_FILE_SIZE_BYTES) {
+      nextErrors.file = `File size should not be more than ${MAX_UPLOAD_FILE_SIZE_MB}MB.`;
+    }
+
+    setErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleFileChange = (selectedFile) => {
+    setSuccessMessage("");
+    setFile(selectedFile || null);
+
+    if (selectedFile) {
+      setErrors((prev) => ({
+        ...prev,
+        file:
+          selectedFile.size > MAX_UPLOAD_FILE_SIZE_BYTES
+            ? `File size should not be more than ${MAX_UPLOAD_FILE_SIZE_MB}MB.`
+            : "",
+      }));
+    }
+  };
 
   const handleUpload = async () => {
-    if (!file || !assetId.trim()) {
-      alert("Please select a file and enter Asset ID");
-      return;
-    }
+    setSuccessMessage("");
+
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("assetId", assetId);
+
+      formData.append("File", file);
+      formData.append("AssetId", String(assetId));
 
       await uploadDocument(formData);
 
-      alert("File uploaded successfully");
+      setSuccessMessage("File uploaded successfully.");
 
       setFile(null);
       setAssetId("");
+      setErrors({});
       setFileKey(Date.now());
     } catch (err) {
-      alert(err.response?.data || err.message || "Upload failed");
+      const message =
+        getApiErrorMessage(err, "Upload failed. Please try again.");
+
+      setErrors((prev) => ({
+        ...prev,
+        form: message,
+      }));
     } finally {
       setLoading(false);
     }
@@ -42,37 +122,62 @@ function Upload() {
         <h1>Document Upload</h1>
       </div>
 
-      <div style={{ maxWidth: 600 }}>
-        <div className="card" style={{ marginBottom: 20 }}>
+      <div className="upload-page-shell">
+        <div className="card upload-card">
           <div className="section-title">
             <i className="fas fa-upload text-muted" />
             <span>Upload Asset Document</span>
           </div>
 
+          {successMessage && (
+            <div className="form-success">{successMessage}</div>
+          )}
+
+          {errors.form && <div className="form-error">{errors.form}</div>}
+
           <div className="form-group">
-            <label className="form-label">Asset ID *</label>
-            <input
-              className="form-control"
-              type="number"
-              placeholder="Enter Asset ID"
+            <label className="form-label">Asset *</label>
+
+            <select
+              className={`form-control ${errors.assetId ? "input-error" : ""}`}
               value={assetId}
-              onChange={(e) => setAssetId(e.target.value)}
-            />
+              onChange={(e) => {
+                setAssetId(e.target.value);
+                setSuccessMessage("");
+                setErrors((prev) => ({ ...prev, assetId: "", form: "" }));
+              }}
+              disabled={loadingAssets}
+            >
+              <option value="">
+                {loadingAssets ? "Loading assets..." : "Select asset..."}
+              </option>
+
+              {assets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  #{asset.id} - {asset.name} ({asset.serialNumber})
+                </option>
+              ))}
+            </select>
+
+            {errors.assetId && (
+              <p className="field-error">{errors.assetId}</p>
+            )}
           </div>
 
           <div className="form-group">
             <label className="form-label">Document File *</label>
 
             <div
-              className="drop-zone"
+              className={`drop-zone ${errors.file ? "drop-zone-error" : ""}`}
               onClick={() => document.getElementById("file-input").click()}
             >
               <input
                 id="file-input"
                 key={fileKey}
                 type="file"
+                accept={ACCEPTED_DOCUMENT_TYPES}
                 style={{ display: "none" }}
-                onChange={(e) => setFile(e.target.files[0])}
+                onChange={(e) => handleFileChange(e.target.files[0])}
               />
 
               <i className="fas fa-cloud-arrow-up drop-icon" />
@@ -91,13 +196,15 @@ function Upload() {
                 </div>
               )}
             </div>
+
+            {errors.file && <p className="field-error">{errors.file}</p>}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div className="upload-actions">
             <button
               className="btn btn-primary"
               onClick={handleUpload}
-              disabled={loading}
+              disabled={loading || loadingAssets}
             >
               {loading ? (
                 <>
@@ -119,7 +226,7 @@ function Upload() {
           </div>
 
           <ul className="instruction-list">
-            <li>Enter a valid Asset ID before uploading</li>
+            <li>Select an existing asset from the dropdown before uploading</li>
             <li>Accepted formats: PDF, PNG, JPG max 10MB</li>
             <li>Click Upload to save the document to the asset record</li>
           </ul>
