@@ -134,6 +134,35 @@ function AdminDashboard() {
     setPage(1);
   };
 
+
+
+  const handleSearchInputChange = (e) => {
+    handleSearch(e.target.value);
+  };
+
+  const handleEmployeeSelect = (e) => {
+    const employeeId = e.currentTarget.dataset.employeeId;
+    const employee = employeeAssetRows.find(
+      (item) => String(item.id) === String(employeeId)
+    );
+
+    setSelectedEmployee(employee || null);
+  };
+
+  const handleEmployeeRowKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleEmployeeSelect(e);
+    }
+  };
+
+  const handleCloseEmployeeDetails = () => {
+    setSelectedEmployee(null);
+  };
+
+  const handleEmployeeDetailPanelClick = (e) => {
+    e.stopPropagation();
+  };
+
   const handlePageSizeChange = (size) => {
     setPageSize(size);
     setPage(1);
@@ -199,7 +228,7 @@ function AdminDashboard() {
                     type="text"
                     placeholder="Search employee or asset..."
                     value={search}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onChange={handleSearchInputChange}
                   />
                 </div>
               </div>
@@ -235,12 +264,9 @@ function AdminDashboard() {
                           className="clickable-row"
                           tabIndex={0}
                           role="button"
-                          onClick={() => setSelectedEmployee(employee)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              setSelectedEmployee(employee);
-                            }
-                          }}
+                          data-employee-id={employee.id}
+                          onClick={handleEmployeeSelect}
+                          onKeyDown={handleEmployeeRowKeyDown}
                         >
                           <td className="td-mono">
                             {(currentPage - 1) * pageSize + index + 1}
@@ -302,11 +328,11 @@ function AdminDashboard() {
       {selectedEmployeeDetails && (
         <div
           className="employee-detail-overlay"
-          onClick={() => setSelectedEmployee(null)}
+          onClick={handleCloseEmployeeDetails}
         >
           <section
             className="employee-detail-panel"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleEmployeeDetailPanelClick}
           >
             <div className="employee-detail-header">
               <div>
@@ -317,7 +343,7 @@ function AdminDashboard() {
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                onClick={() => setSelectedEmployee(null)}
+                onClick={handleCloseEmployeeDetails}
               >
                 <i className="fas fa-xmark" />
                 Close

@@ -87,6 +87,24 @@ function Assets() {
     });
   }, [assets, assignments, employees, search, statusFilters]);
 
+
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+  };
+
+  const handleToggleStatusFilter = () => {
+    setShowStatusFilter((prev) => !prev);
+  };
+
+  const handleStatusFilterInputChange = (e) => {
+    handleStatusFilterChange(e.target.value);
+  };
+
+  const handleDeleteClick = (e) => {
+    handleDelete(e.currentTarget.dataset.assetId);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -190,7 +208,7 @@ function Assets() {
             type="text"
             placeholder="Search by name, type, serial, status, or employee..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
       </div>
@@ -223,7 +241,7 @@ function Assets() {
                     <button
                       type="button"
                       className="status-filter-button"
-                      onClick={() => setShowStatusFilter((prev) => !prev)}
+                      onClick={handleToggleStatusFilter}
                     >
                       Status <i className="fas fa-filter" />
                     </button>
@@ -234,8 +252,9 @@ function Assets() {
                           <label key={status} className="filter-check-row">
                             <input
                               type="checkbox"
+                              value={status}
                               checked={statusFilters[status]}
-                              onChange={() => handleStatusFilterChange(status)}
+                              onChange={handleStatusFilterInputChange}
                             />
                             {status}
                           </label>
@@ -288,7 +307,8 @@ function Assets() {
                         <button
                           type="button"
                           className="btn btn-danger btn-sm"
-                          onClick={() => handleDelete(asset.id)}
+                          data-asset-id={asset.id}
+                          onClick={handleDeleteClick}
                         >
                           <i className="fas fa-trash-can" />
                         </button>

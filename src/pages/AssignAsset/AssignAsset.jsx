@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Pagination } from "../../components";
 import { DEFAULT_PAGE_SIZE, INITIAL_ASSIGNMENT_FORM } from "../../constants";
@@ -8,13 +8,26 @@ import { formatDate, getApiErrorMessage, isReturned } from "../../utils";
 
 import "./AssignAsset.css";
 
+const INITIAL_STATUS_FILTERS = {
+  Active: true,
+  Returned: true,
+};
+
 function AssignAsset() {
   const [assignments, setAssignments] = useState([]);
   const [assignData, setAssignData] = useState(INITIAL_ASSIGNMENT_FORM);
   const [loading, setLoading] = useState(false);
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
   const [errors, setErrors] = useState({});
+
+  const [statusFilters, setStatusFilters] = useState(
+    INITIAL_STATUS_FILTERS
+  );
+
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   useEffect(() => {
     loadAssignments();
@@ -27,16 +40,56 @@ function AssignAsset() {
     }));
   };
 
-  const totalPages = Math.max(1, Math.ceil(assignments.length / pageSize));
+  const filteredAssignments = useMemo(() => {
+    return assignments.filter((assignment) => {
+      const status = isReturned(assignment)
+        ? "Returned"
+        : "Active";
+
+      return statusFilters[status];
+    });
+  }, [assignments, statusFilters]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAssignments.length / pageSize)
+  );
+
   const currentPage = Math.min(page, totalPages);
-  const paginatedAssignments = assignments.slice(
+
+  const paginatedAssignments = filteredAssignments.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
+  const hasActiveAssignments = paginatedAssignments.some(
+    (assignment) => !isReturned(assignment)
+  );
+
+
+
+  const handleToggleStatusFilter = () => {
+    setShowStatusFilter((prev) => !prev);
+  };
+
+  const handleStatusFilterInputChange = (e) => {
+    handleStatusFilterChange(e.target.value);
+  };
+
+  const handleReturnClick = (e) => {
+    handleReturn(e.currentTarget.dataset.assignmentId);
+  };
+
   const handlePageSizeChange = (size) => {
     setPageSize(size);
     setPage(1);
+  };
+
+  const handleStatusFilterChange = (status) => {
+    setStatusFilters((prevFilters) => ({
+      ...prevFilters,
+      [status]: !prevFilters[status],
+    }));
   };
 
   const handleChange = (e) => {
@@ -63,11 +116,17 @@ function AssignAsset() {
 
     const nextErrors = {};
 
-    if (!payload.assetId) nextErrors.assetId = "Asset ID is required.";
-    if (!payload.employeeId) nextErrors.employeeId = "Employee ID is required.";
+    if (!payload.assetId) {
+      nextErrors.assetId = "Asset ID is required.";
+    }
+
+    if (!payload.employeeId) {
+      nextErrors.employeeId = "Employee ID is required.";
+    }
 
     if (payload.assetId && isAssetAlreadyAssigned()) {
-      nextErrors.assetId = "Asset is already assigned and not yet returned.";
+      nextErrors.assetId =
+        "Asset is already assigned and not yet returned.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -77,19 +136,28 @@ function AssignAsset() {
 
     try {
       await assignAsset(payload);
+
       setAssignData(INITIAL_ASSIGNMENT_FORM);
       setErrors({});
+
       loadAssignments();
     } catch (error) {
       console.error("Assignment failed", error);
-      setErrors({ form: getApiErrorMessage(error, "Assignment failed.") });
+
+      setErrors({
+        form: getApiErrorMessage(
+          error,
+          "Assignment failed."
+        ),
+      });
     }
   };
 
   const isAssetAlreadyAssigned = () => {
     return assignments.some((assignment) => {
       return (
-        String(assignment.assetId) === String(assignData.assetId) &&
+        String(assignment.assetId) ===
+          String(assignData.assetId) &&
         !isReturned(assignment)
       );
     });
@@ -100,9 +168,15 @@ function AssignAsset() {
       setLoading(true);
 
       const res = await getAssignments();
-      setAssignments(normalizeAssignments(res.data || []));
+
+      setAssignments(
+        normalizeAssignments(res.data || [])
+      );
     } catch (error) {
-      console.error("Failed to load assignments", error);
+      console.error(
+        "Failed to load assignments",
+        error
+      );
     } finally {
       setLoading(false);
     }
@@ -117,7 +191,8 @@ function AssignAsset() {
 
       setAssignments((prevAssignments) =>
         prevAssignments.map((assignment) =>
-          (assignment.assignmentId || assignment.id) === assignmentId
+          (assignment.assignmentId ||
+            assignment.id) === assignmentId
             ? {
                 ...assignment,
                 isReturned: true,
@@ -128,12 +203,21 @@ function AssignAsset() {
       );
     } catch (error) {
       console.error("Return failed", error);
-      setErrors({ form: getApiErrorMessage(error, "Return failed.") });
+
+      setErrors({
+        form: getApiErrorMessage(
+          error,
+          "Return failed."
+        ),
+      });
     }
   };
 
   return (
-    <DashboardLayout role="Admin" title="Assignments">
+    <DashboardLayout
+      role="Admin"
+      title="Assignments"
+    >
       <div className="page-header">
         <h1>Asset Assignment</h1>
       </div>
@@ -144,39 +228,65 @@ function AssignAsset() {
           <span>Assign Asset</span>
         </div>
 
-        {errors.form && <div className="form-error-banner">{errors.form}</div>}
+        {errors.form && (
+          <div className="form-error-banner">
+            {errors.form}
+          </div>
+        )}
 
         <div className="form-grid-3">
           <div className="form-group">
-            <label className="form-label">Asset ID *</label>
+            <label className="form-label">
+              Asset ID *
+            </label>
 
             <input
-              className={`form-control ${errors.assetId ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.assetId ? "is-invalid" : ""
+              }`}
               type="text"
               name="assetId"
               placeholder="e.g. 1"
               value={assignData.assetId}
               onChange={handleChange}
             />
-            {errors.assetId && <p className="field-error">{errors.assetId}</p>}
+
+            {errors.assetId && (
+              <p className="field-error">
+                {errors.assetId}
+              </p>
+            )}
           </div>
 
           <div className="form-group">
-            <label className="form-label">Employee ID *</label>
+            <label className="form-label">
+              Employee ID *
+            </label>
 
             <input
-              className={`form-control ${errors.employeeId ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.employeeId
+                  ? "is-invalid"
+                  : ""
+              }`}
               type="text"
               name="employeeId"
               placeholder="e.g. 5"
               value={assignData.employeeId}
               onChange={handleChange}
             />
-            {errors.employeeId && <p className="field-error">{errors.employeeId}</p>}
+
+            {errors.employeeId && (
+              <p className="field-error">
+                {errors.employeeId}
+              </p>
+            )}
           </div>
 
           <div className="form-group">
-            <label className="form-label">Condition at Issue</label>
+            <label className="form-label">
+              Condition at Issue
+            </label>
 
             <input
               className="form-control"
@@ -190,7 +300,11 @@ function AssignAsset() {
         </div>
 
         <div className="form-actions-right">
-          <button type="button" className="btn btn-primary" onClick={handleAssign}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleAssign}
+          >
             <i className="fas fa-link" />
             Assign Asset
           </button>
@@ -208,10 +322,13 @@ function AssignAsset() {
             <i className="fas fa-spinner fa-spin" />
             <p>Loading...</p>
           </div>
-        ) : assignments.length === 0 ? (
+        ) : filteredAssignments.length === 0 ? (
           <div className="empty-state">
             <i className="fas fa-inbox" />
-            <p>No assignments found.</p>
+            <p>
+              No assignments found for selected
+              filters.
+            </p>
           </div>
         ) : (
           <div className="table-wrap">
@@ -219,67 +336,135 @@ function AssignAsset() {
               <thead>
                 <tr>
                   <th>Asset Name</th>
+
                   <th>Employee Name</th>
+
                   <th>Issued</th>
+
                   <th>Return Date</th>
-                  <th>Status</th>
-                  <th>Action</th>
+
+                  <th className="status-filter-header">
+                    <button
+                      type="button"
+                      className="status-filter-button"
+                      onClick={handleToggleStatusFilter}
+                    >
+                      Status{" "}
+                      <i className="fas fa-filter" />
+                    </button>
+
+                    {showStatusFilter && (
+                      <div className="status-filter-overlay">
+                        {Object.keys(
+                          INITIAL_STATUS_FILTERS
+                        ).map((status) => (
+                          <label
+                            key={status}
+                            className="filter-check-row"
+                          >
+                            <input
+                              type="checkbox"
+                              value={status}
+                              checked={
+                                statusFilters[status]
+                              }
+                              onChange={handleStatusFilterInputChange}
+                            />
+                            {status}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </th>
+
+                  {hasActiveAssignments && (
+                    <th>Action</th>
+                  )}
                 </tr>
               </thead>
 
               <tbody>
-                {paginatedAssignments.map((assignment) => {
-                  const assignmentId =
-                    assignment.assignmentId || assignment.id;
+                {paginatedAssignments.map(
+                  (assignment) => {
+                    const assignmentId =
+                      assignment.assignmentId ||
+                      assignment.id;
 
-                  const returned = isReturned(assignment);
+                    const returned =
+                      isReturned(assignment);
 
-                  return (
-                    <tr key={assignmentId}>
-                      <td className="asset-name">
-                        {assignment.assetName || `Asset #${assignment.assetId}`}
-                      </td>
+                    return (
+                      <tr key={assignmentId}>
+                        <td className="asset-name">
+                          {assignment.assetName ||
+                            `Asset #${assignment.assetId}`}
+                        </td>
 
-                      <td>
-                        {assignment.employeeName || `Employee #${assignment.employeeId}`}
-                      </td>
+                        <td>
+                          {assignment.employeeName ||
+                            `Employee #${assignment.employeeId}`}
+                        </td>
 
-                      <td className="td-mono">
-                        {formatDate(assignment.issuedDate)}
-                      </td>
+                        <td className="td-mono">
+                          {formatDate(
+                            assignment.issuedDate
+                          )}
+                        </td>
 
-                      <td className="td-mono">
-                        {formatDate(assignment.returnDate || assignment.actualReturnDate)}
-                      </td>
+                        <td className="td-mono">
+                          {formatDate(
+                            assignment.returnDate ||
+                              assignment.actualReturnDate
+                          )}
+                        </td>
 
-                      <td>
-                        <span
-                          className={`badge ${
-                            returned ? "badge-green" : "badge-warn"
-                          }`}
-                        >
-                          {returned ? "Returned" : "Active"}
-                        </span>
-                      </td>
-
-                      <td>
-                        {!returned && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleReturn(assignmentId)}
+                        <td>
+                          <span
+                            className={`badge ${
+                              returned
+                                ? "badge-green"
+                                : "badge-warn"
+                            }`}
                           >
-                            <i className="fas fa-rotate-left" />
-                            Return
-                          </button>
+                            {returned
+                              ? "Returned"
+                              : "Active"}
+                          </span>
+                        </td>
+
+                        {hasActiveAssignments && (
+                          <td>
+                            {!returned && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                data-assignment-id={assignmentId}
+                                  onClick={handleReturnClick}
+                              >
+                                <i className="fas fa-rotate-left" />
+                                Return
+                              </button>
+                            )}
+                          </td>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </tr>
+                    );
+                  }
+                )}
               </tbody>
             </table>
-            <Pagination page={currentPage} pageSize={pageSize} totalItems={assignments.length} onPageChange={setPage} onPageSizeChange={handlePageSizeChange} />
+
+            <Pagination
+              page={currentPage}
+              pageSize={pageSize}
+              totalItems={
+                filteredAssignments.length
+              }
+              onPageChange={setPage}
+              onPageSizeChange={
+                handlePageSizeChange
+              }
+            />
           </div>
         )}
       </div>

@@ -57,6 +57,11 @@ function Login() {
     }
   };
 
+
+  const handleTogglePassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
     <div className="login-root">
       <div className="login-shell">
@@ -140,7 +145,7 @@ function Login() {
                 <button
                   type="button"
                   className="toggle-pw"
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  onClick={handleTogglePassword}
                 >
                   <i
                     className={`fas ${

@@ -82,6 +82,22 @@ function Upload() {
     }
   };
 
+
+
+  const handleAssetChange = (e) => {
+    setAssetId(e.target.value);
+    setSuccessMessage("");
+    setErrors((prev) => ({ ...prev, assetId: "", form: "" }));
+  };
+
+  const handleDropZoneClick = () => {
+    document.getElementById("file-input")?.click();
+  };
+
+  const handleFileInputChange = (e) => {
+    handleFileChange(e.target.files[0]);
+  };
+
   const handleUpload = async () => {
     setSuccessMessage("");
 
@@ -141,11 +157,7 @@ function Upload() {
             <select
               className={`form-control ${errors.assetId ? "input-error" : ""}`}
               value={assetId}
-              onChange={(e) => {
-                setAssetId(e.target.value);
-                setSuccessMessage("");
-                setErrors((prev) => ({ ...prev, assetId: "", form: "" }));
-              }}
+              onChange={handleAssetChange}
               disabled={loadingAssets}
             >
               <option value="">
@@ -169,7 +181,7 @@ function Upload() {
 
             <div
               className={`drop-zone ${errors.file ? "drop-zone-error" : ""}`}
-              onClick={() => document.getElementById("file-input").click()}
+              onClick={handleDropZoneClick}
             >
               <input
                 id="file-input"
@@ -177,7 +189,7 @@ function Upload() {
                 type="file"
                 accept={ACCEPTED_DOCUMENT_TYPES}
                 style={{ display: "none" }}
-                onChange={(e) => handleFileChange(e.target.files[0])}
+                onChange={handleFileInputChange}
               />
 
               <i className="fas fa-cloud-arrow-up drop-icon" />

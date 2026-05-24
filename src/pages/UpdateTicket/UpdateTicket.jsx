@@ -42,6 +42,26 @@ function UpdateTicket() {
     }
   };
 
+
+
+  const handleTicketIdChange = (e) => {
+    setTicketId(e.target.value);
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      ticketId: "",
+      form: "",
+    }));
+  };
+
+  const handleStatusChange = (e) => {
+    setNewStatus(e.target.value);
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      status: "",
+      form: "",
+    }));
+  };
+
   const handleUpdate = async () => {
     const selectedTicketId = ticketId.trim();
     const nextErrors = {};
@@ -104,14 +124,7 @@ function UpdateTicket() {
               type="text"
               placeholder="e.g. 3"
               value={ticketId}
-              onChange={(e) => {
-                setTicketId(e.target.value);
-                setErrors((prevErrors) => ({
-                  ...prevErrors,
-                  ticketId: "",
-                  form: "",
-                }));
-              }}
+              onChange={handleTicketIdChange}
             />
             {errors.ticketId && (
               <p className="field-error">{errors.ticketId}</p>
@@ -124,14 +137,7 @@ function UpdateTicket() {
             <select
               className={`form-control ${errors.status ? "is-invalid" : ""}`}
               value={newStatus}
-              onChange={(e) => {
-                setNewStatus(e.target.value);
-                setErrors((prevErrors) => ({
-                  ...prevErrors,
-                  status: "",
-                  form: "",
-                }));
-              }}
+              onChange={handleStatusChange}
             >
               {TICKET_STATUS_OPTIONS.map((status) => (
                 <option key={status.value} value={status.value}>

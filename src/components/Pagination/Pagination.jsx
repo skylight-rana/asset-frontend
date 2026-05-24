@@ -3,6 +3,18 @@ import "./Pagination.css";
 
 function Pagination({ page, pageSize, totalItems, onPageChange, onPageSizeChange }) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  const handlePageSizeSelect = (e) => {
+    onPageSizeChange(Number(e.target.value));
+  };
+
+  const handlePreviousPage = () => {
+    onPageChange(page - 1);
+  };
+
+  const handleNextPage = () => {
+    onPageChange(page + 1);
+  };
   const startItem = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
   const endItem = Math.min(page * pageSize, totalItems);
 
@@ -16,7 +28,7 @@ function Pagination({ page, pageSize, totalItems, onPageChange, onPageSizeChange
         <select
           className="pagination-size"
           value={pageSize}
-          onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          onChange={handlePageSizeSelect}
         >
           {PAGE_SIZE_OPTIONS.map((size) => (
             <option key={size} value={size}>
@@ -28,7 +40,7 @@ function Pagination({ page, pageSize, totalItems, onPageChange, onPageSizeChange
         <button
           type="button"
           className="btn btn-secondary btn-sm"
-          onClick={() => onPageChange(page - 1)}
+          onClick={handlePreviousPage}
           disabled={page === 1}
         >
           Previous
@@ -41,7 +53,7 @@ function Pagination({ page, pageSize, totalItems, onPageChange, onPageSizeChange
         <button
           type="button"
           className="btn btn-secondary btn-sm"
-          onClick={() => onPageChange(page + 1)}
+          onClick={handleNextPage}
           disabled={page === totalPages}
         >
           Next
