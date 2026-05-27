@@ -6,7 +6,13 @@ import {
   MAX_UPLOAD_FILE_SIZE_MB,
 } from "../../constants";
 import { DashboardLayout } from "../../layouts";
-import { getAssets, uploadDocument } from "../../services";
+import {
+  getAssets,
+  getDocumentsByAsset,
+  getDocumentDownloadUrl,
+  getDocumentViewUrl,
+  uploadDocument,
+} from "../../services";
 import { getApiErrorMessage } from "../../utils";
 
 import "./Upload.css";
@@ -17,8 +23,10 @@ function Upload() {
   const [file, setFile] = useState(null);
   const [fileKey, setFileKey] = useState(Date.now());
   const [assetId, setAssetId] = useState("");
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingAssets, setLoadingAssets] = useState(false);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -29,6 +37,24 @@ function Upload() {
   const selectedAsset = useMemo(() => {
     return assets.find((asset) => String(asset.id) === String(assetId));
   }, [assets, assetId]);
+
+  const loadDocuments = async (selectedAssetId) => {
+    if (!selectedAssetId) {
+      setDocuments([]);
+      return;
+    }
+
+    try {
+      setLoadingDocuments(true);
+      const res = await getDocumentsByAsset(selectedAssetId);
+      setDocuments(res.data || []);
+    } catch (error) {
+      console.error("Failed to load documents", error);
+      setDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
 
   const loadAssets = async () => {
     try {
@@ -85,9 +111,12 @@ function Upload() {
 
 
   const handleAssetChange = (e) => {
-    setAssetId(e.target.value);
+    const selectedAssetId = e.target.value;
+
+    setAssetId(selectedAssetId);
     setSuccessMessage("");
     setErrors((prev) => ({ ...prev, assetId: "", form: "" }));
+    loadDocuments(selectedAssetId);
   };
 
   const handleDropZoneClick = () => {
@@ -116,9 +145,9 @@ function Upload() {
       setSuccessMessage("File uploaded successfully.");
 
       setFile(null);
-      setAssetId("");
       setErrors({});
       setFileKey(Date.now());
+      loadDocuments(assetId);
     } catch (err) {
       const message =
         getApiErrorMessage(err, "Upload failed. Please try again.");
@@ -241,7 +270,63 @@ function Upload() {
             <li>Select an existing asset from the dropdown before uploading</li>
             <li>Accepted formats: PDF, PNG, JPG max 10MB</li>
             <li>Click Upload to save the document to the asset record</li>
+            <li>After selecting an asset, uploaded documents appear below</li>
           </ul>
+        </div>
+
+        <div className="card document-list-card">
+          <div className="section-title">
+            <i className="fas fa-file-lines text-muted" />
+            <span>Uploaded Documents</span>
+          </div>
+
+          {!assetId ? (
+            <div className="empty-state compact">
+              <i className="fas fa-folder-open" />
+              <p>Select an asset to view uploaded documents.</p>
+            </div>
+          ) : loadingDocuments ? (
+            <div className="empty-state compact">
+              <i className="fas fa-spinner fa-spin" />
+              <p>Loading documents...</p>
+            </div>
+          ) : documents.length === 0 ? (
+            <div className="empty-state compact">
+              <i className="fas fa-inbox" />
+              <p>No documents uploaded for this asset.</p>
+            </div>
+          ) : (
+            <div className="document-list">
+              {documents.map((document) => (
+                <div className="document-row" key={document.id}>
+                  <div className="document-info">
+                    <i className="fas fa-file" />
+                    <span>{document.fileName}</span>
+                  </div>
+
+                  <div className="document-actions">
+                    <a
+                      className="btn btn-secondary btn-sm"
+                      href={getDocumentViewUrl(document.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <i className="fas fa-eye" />
+                      View
+                    </a>
+
+                    <a
+                      className="btn btn-primary btn-sm"
+                      href={getDocumentDownloadUrl(document.id)}
+                    >
+                      <i className="fas fa-download" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

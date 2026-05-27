@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { ASSET_TYPES, INITIAL_ASSET_FORM } from "../../constants";
+import {
+  AssetForm,
+  AssetTable,
+  PageHeader,
+  SearchBox,
+} from "../../components";
+import { INITIAL_ASSET_FORM } from "../../constants";
 import { DashboardLayout } from "../../layouts";
 import {
   createAsset,
@@ -36,22 +42,6 @@ function Assets() {
     loadAssets();
   }, []);
 
-  const loadAssets = async () => {
-    try {
-      const [assetRes, assignmentRes, employeeRes] = await Promise.all([
-        getAssets(),
-        getAssignments(),
-        getEmployees(),
-      ]);
-
-      setAssets(assetRes.data || []);
-      setAssignments(assignmentRes.data || []);
-      setEmployees(employeeRes.data || []);
-    } catch (error) {
-      console.error("Failed to load assets", error);
-    }
-  };
-
   const getAssetAssignment = (assetId) => {
     return findActiveAssignmentByAsset(assignments, assetId);
   };
@@ -66,7 +56,7 @@ function Assets() {
     return assets.filter((asset) => {
       const assignment = getAssetAssignment(asset.id);
       const status = getAssetStatus(assignment);
-            const employeeName = assignment
+      const employeeName = assignment
         ? getEmployeeName(assignment.employeeId).toLowerCase()
         : "";
 
@@ -87,7 +77,21 @@ function Assets() {
     });
   }, [assets, assignments, employees, search, statusFilters]);
 
+  const loadAssets = async () => {
+    try {
+      const [assetRes, assignmentRes, employeeRes] = await Promise.all([
+        getAssets(),
+        getAssignments(),
+        getEmployees(),
+      ]);
 
+      setAssets(assetRes.data || []);
+      setAssignments(assignmentRes.data || []);
+      setEmployees(employeeRes.data || []);
+    } catch (error) {
+      console.error("Failed to load assets", error);
+    }
+  };
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
@@ -99,10 +103,6 @@ function Assets() {
 
   const handleStatusFilterInputChange = (e) => {
     handleStatusFilterChange(e.target.value);
-  };
-
-  const handleDeleteClick = (e) => {
-    handleDelete(e.currentTarget.dataset.assetId);
   };
 
   const handleChange = (e) => {
@@ -130,7 +130,7 @@ function Assets() {
 
     if (!payload.name) nextErrors.name = "Asset name is required.";
     if (!payload.type) nextErrors.type = "Asset type is required.";
-        if (!payload.serialNumber) {
+    if (!payload.serialNumber) {
       nextErrors.serialNumber = "Serial number is required.";
     }
 
@@ -188,205 +188,38 @@ function Assets() {
     }));
   };
 
-  const scrollToAddForm = () => {
-    document.getElementById("add-form")?.scrollIntoView({
-      behavior: "smooth",
-    });
-  };
-
   return (
     <DashboardLayout role="Admin" title="Assets">
-      <div className="page-header">
-        <h1>Asset Management</h1>
-      </div>
+      <PageHeader title="Asset Management" />
 
       <div className="filter-bar filter-bar-spaced">
-        <div className="header-search wide">
-          <i className="fas fa-search" />
-
-          <input
-            type="text"
-            placeholder="Search by name, type, serial, status, or employee..."
-            value={search}
-            onChange={handleSearchChange}
-          />
-        </div>
+        <SearchBox
+          wide
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Search by name, type, serial, status, or employee..."
+        />
       </div>
 
-      <div className="card asset-list-card">
-        <div className="section-title">
-          <i className="fas fa-box text-muted" />
-          <span>All Assets</span>
-        </div>
+      <AssetTable
+        assets={filteredAssets}
+        search={search}
+        statusFilters={statusFilters}
+        showStatusFilter={showStatusFilter}
+        onStatusFilterToggle={handleToggleStatusFilter}
+        onStatusFilterChange={handleStatusFilterInputChange}
+        onDelete={handleDelete}
+        getAssetAssignment={getAssetAssignment}
+        getAssetStatus={getAssetStatus}
+        getEmployeeName={getEmployeeName}
+      />
 
-        {filteredAssets.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-box-open" />
-            <p>
-              {search
-                ? "No assets match your search."
-                : "No assets found for selected filters."}
-            </p>
-          </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Serial Number</th>
-                  <th className="status-filter-header">
-                    <button
-                      type="button"
-                      className="status-filter-button"
-                      onClick={handleToggleStatusFilter}
-                    >
-                      Status <i className="fas fa-filter" />
-                    </button>
-
-                    {showStatusFilter && (
-                      <div className="status-filter-overlay">
-                        {Object.keys(INITIAL_FILTERS).map((status) => (
-                          <label key={status} className="filter-check-row">
-                            <input
-                              type="checkbox"
-                              value={status}
-                              checked={statusFilters[status]}
-                              onChange={handleStatusFilterInputChange}
-                            />
-                            {status}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </th>
-                  <th>Assigned To</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredAssets.map((asset) => {
-                  const assignment = getAssetAssignment(asset.id);
-                  const status = getAssetStatus(assignment);
-                  const isAssigned = status === "Assigned";
-
-                  return (
-                    <tr key={asset.id}>
-                      <td className="td-mono">{asset.id}</td>
-
-                      <td className="asset-name">{asset.name}</td>
-
-                      <td>
-                        <span className="badge badge-blue">
-                          {asset.type}
-                        </span>
-                      </td>
-
-                      <td className="td-mono">{asset.serialNumber}</td>
-
-                      <td>
-                        <span className={`badge ${isAssigned ? "badge-warn" : "badge-green"}`}>
-                          {status}
-                        </span>
-                      </td>
-
-                      <td>
-                        {isAssigned ? (
-                          <span className="employee-name">
-                            {getEmployeeName(assignment.employeeId)}
-                          </span>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
-                      </td>
-
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          data-asset-id={asset.id}
-                          onClick={handleDeleteClick}
-                        >
-                          <i className="fas fa-trash-can" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="card" id="add-form">
-        <div className="section-title">
-          <i className="fas fa-plus-circle text-muted" />
-          <span>Add New Asset</span>
-        </div>
-
-        {errors.form && <div className="form-error-banner">{errors.form}</div>}
-
-        <div className="form-grid-3">
-          <div className="form-group">
-            <label className="form-label">Asset Name *</label>
-
-            <input
-              className={`form-control ${errors.name ? "is-invalid" : ""}`}
-              type="text"
-              name="name"
-              placeholder="e.g. Dell XPS 15"
-              value={form.name}
-              onChange={handleChange}
-            />
-            {errors.name && <p className="field-error">{errors.name}</p>}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Type *</label>
-
-            <select
-              className={`form-control ${errors.type ? "is-invalid" : ""}`}
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-            >
-              <option value="">Select type...</option>
-
-              {ASSET_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            {errors.type && <p className="field-error">{errors.type}</p>}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Serial Number *</label>
-
-            <input
-              className={`form-control ${errors.serialNumber ? "is-invalid" : ""}`}
-              type="text"
-              name="serialNumber"
-              placeholder="e.g. SN-001"
-              value={form.serialNumber}
-              onChange={handleChange}
-            />
-            {errors.serialNumber && <p className="field-error">{errors.serialNumber}</p>}
-          </div>
-        </div>
-
-        <div className="form-actions-right">
-          <button type="button" className="btn btn-primary" onClick={handleSubmit}>
-            <i className="fas fa-plus" />
-            Add Asset
-          </button>
-        </div>
-      </div>
+      <AssetForm
+        form={form}
+        errors={errors}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+      />
     </DashboardLayout>
   );
 }

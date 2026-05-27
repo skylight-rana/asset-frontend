@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Pagination } from "../../components";
+import {
+  AssignmentForm,
+  AssignmentHistoryTable,
+  PageHeader,
+} from "../../components";
 import { DEFAULT_PAGE_SIZE, INITIAL_ASSIGNMENT_FORM } from "../../constants";
 import { DashboardLayout } from "../../layouts";
-import { assignAsset, getAssignments, returnAsset } from "../../services";
-import { formatDate, getApiErrorMessage, isReturned } from "../../utils";
+import { assignAsset, getAssets, getAssignments, getEmployees, returnAsset } from "../../services";
+import { getApiErrorMessage, isReturned } from "../../utils";
 
 import "./AssignAsset.css";
 
@@ -15,37 +19,40 @@ const INITIAL_STATUS_FILTERS = {
 
 function AssignAsset() {
   const [assignments, setAssignments] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [assignData, setAssignData] = useState(INITIAL_ASSIGNMENT_FORM);
+  const [assetSearch, setAssetSearch] = useState("");
+  const [employeeSearch, setEmployeeSearch] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-
   const [errors, setErrors] = useState({});
-
-  const [statusFilters, setStatusFilters] = useState(
-    INITIAL_STATUS_FILTERS
-  );
-
+  const [statusFilters, setStatusFilters] = useState(INITIAL_STATUS_FILTERS);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   useEffect(() => {
-    loadAssignments();
+    loadAssignmentPageData();
   }, []);
 
-  const normalizeAssignments = (data) => {
-    return data.map((assignment) => ({
-      ...assignment,
-      isReturned: isReturned(assignment),
+
+  const assetOptions = useMemo(() => {
+    return assets.map((asset) => ({
+      ...asset,
+      label: `#${asset.id} - ${asset.name} (${asset.serialNumber})`,
     }));
-  };
+  }, [assets]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map((employee) => ({
+      ...employee,
+      label: `#${employee.id} - ${employee.name} (${employee.email})`,
+    }));
+  }, [employees]);
 
   const filteredAssignments = useMemo(() => {
     return assignments.filter((assignment) => {
-      const status = isReturned(assignment)
-        ? "Returned"
-        : "Active";
-
+      const status = isReturned(assignment) ? "Returned" : "Active";
       return statusFilters[status];
     });
   }, [assignments, statusFilters]);
@@ -54,19 +61,21 @@ function AssignAsset() {
     1,
     Math.ceil(filteredAssignments.length / pageSize)
   );
-
   const currentPage = Math.min(page, totalPages);
-
   const paginatedAssignments = filteredAssignments.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
   const hasActiveAssignments = paginatedAssignments.some(
     (assignment) => !isReturned(assignment)
   );
 
-
+  const normalizeAssignments = (data) => {
+    return data.map((assignment) => ({
+      ...assignment,
+      isReturned: isReturned(assignment),
+    }));
+  };
 
   const handleToggleStatusFilter = () => {
     setShowStatusFilter((prev) => !prev);
@@ -74,10 +83,6 @@ function AssignAsset() {
 
   const handleStatusFilterInputChange = (e) => {
     handleStatusFilterChange(e.target.value);
-  };
-
-  const handleReturnClick = (e) => {
-    handleReturn(e.currentTarget.dataset.assignmentId);
   };
 
   const handlePageSizeChange = (size) => {
@@ -90,6 +95,16 @@ function AssignAsset() {
       ...prevFilters,
       [status]: !prevFilters[status],
     }));
+  };
+
+  const getIdFromSearchValue = (value, options) => {
+    const exactMatch = options.find((option) => option.label === value);
+
+    if (exactMatch) return String(exactMatch.id);
+
+    const numericValue = value.trim().match(/^#?(\d+)/)?.[1];
+
+    return numericValue || "";
   };
 
   const handleChange = (e) => {
@@ -107,6 +122,30 @@ function AssignAsset() {
     }));
   };
 
+  const handleAssetSearchChange = (e) => {
+    const value = e.target.value;
+    const assetId = getIdFromSearchValue(value, assetOptions);
+
+    setAssetSearch(value);
+    setAssignData((prevData) => ({
+      ...prevData,
+      assetId,
+    }));
+    setErrors((prevErrors) => ({ ...prevErrors, assetId: "", form: "" }));
+  };
+
+  const handleEmployeeSearchChange = (e) => {
+    const value = e.target.value;
+    const employeeId = getIdFromSearchValue(value, employeeOptions);
+
+    setEmployeeSearch(value);
+    setAssignData((prevData) => ({
+      ...prevData,
+      employeeId,
+    }));
+    setErrors((prevErrors) => ({ ...prevErrors, employeeId: "", form: "" }));
+  };
+
   const handleAssign = async () => {
     const payload = {
       assetId: assignData.assetId.trim(),
@@ -116,17 +155,11 @@ function AssignAsset() {
 
     const nextErrors = {};
 
-    if (!payload.assetId) {
-      nextErrors.assetId = "Asset ID is required.";
-    }
-
-    if (!payload.employeeId) {
-      nextErrors.employeeId = "Employee ID is required.";
-    }
+    if (!payload.assetId) nextErrors.assetId = "Asset ID is required.";
+    if (!payload.employeeId) nextErrors.employeeId = "Employee ID is required.";
 
     if (payload.assetId && isAssetAlreadyAssigned()) {
-      nextErrors.assetId =
-        "Asset is already assigned and not yet returned.";
+      nextErrors.assetId = "Asset is already assigned and not yet returned.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -136,47 +169,41 @@ function AssignAsset() {
 
     try {
       await assignAsset(payload);
-
       setAssignData(INITIAL_ASSIGNMENT_FORM);
+      setAssetSearch("");
+      setEmployeeSearch("");
       setErrors({});
-
-      loadAssignments();
+      loadAssignmentPageData();
     } catch (error) {
       console.error("Assignment failed", error);
-
-      setErrors({
-        form: getApiErrorMessage(
-          error,
-          "Assignment failed."
-        ),
-      });
+      setErrors({ form: getApiErrorMessage(error, "Assignment failed.") });
     }
   };
 
   const isAssetAlreadyAssigned = () => {
     return assignments.some((assignment) => {
       return (
-        String(assignment.assetId) ===
-          String(assignData.assetId) &&
+        String(assignment.assetId) === String(assignData.assetId) &&
         !isReturned(assignment)
       );
     });
   };
 
-  const loadAssignments = async () => {
+  const loadAssignmentPageData = async () => {
     try {
       setLoading(true);
 
-      const res = await getAssignments();
+      const [assignmentRes, assetRes, employeeRes] = await Promise.all([
+        getAssignments(),
+        getAssets(),
+        getEmployees(),
+      ]);
 
-      setAssignments(
-        normalizeAssignments(res.data || [])
-      );
+      setAssignments(normalizeAssignments(assignmentRes.data || []));
+      setAssets(assetRes.data || []);
+      setEmployees(employeeRes.data || []);
     } catch (error) {
-      console.error(
-        "Failed to load assignments",
-        error
-      );
+      console.error("Failed to load assignment page data", error);
     } finally {
       setLoading(false);
     }
@@ -191,8 +218,7 @@ function AssignAsset() {
 
       setAssignments((prevAssignments) =>
         prevAssignments.map((assignment) =>
-          (assignment.assignmentId ||
-            assignment.id) === assignmentId
+          (assignment.assignmentId || assignment.id) === assignmentId
             ? {
                 ...assignment,
                 isReturned: true,
@@ -203,271 +229,42 @@ function AssignAsset() {
       );
     } catch (error) {
       console.error("Return failed", error);
-
-      setErrors({
-        form: getApiErrorMessage(
-          error,
-          "Return failed."
-        ),
-      });
+      setErrors({ form: getApiErrorMessage(error, "Return failed.") });
     }
   };
 
   return (
-    <DashboardLayout
-      role="Admin"
-      title="Assignments"
-    >
-      <div className="page-header">
-        <h1>Asset Assignment</h1>
-      </div>
+    <DashboardLayout role="Admin" title="Assignments">
+      <PageHeader title="Asset Assignment" />
 
-      <div className="card assignment-form-card">
-        <div className="section-title">
-          <i className="fas fa-link text-muted" />
-          <span>Assign Asset</span>
-        </div>
+      <AssignmentForm
+        assignData={assignData}
+        errors={errors}
+        assetSearch={assetSearch}
+        employeeSearch={employeeSearch}
+        assetOptions={assetOptions}
+        employeeOptions={employeeOptions}
+        onChange={handleChange}
+        onAssetSearchChange={handleAssetSearchChange}
+        onEmployeeSearchChange={handleEmployeeSearchChange}
+        onSubmit={handleAssign}
+      />
 
-        {errors.form && (
-          <div className="form-error-banner">
-            {errors.form}
-          </div>
-        )}
-
-        <div className="form-grid-3">
-          <div className="form-group">
-            <label className="form-label">
-              Asset ID *
-            </label>
-
-            <input
-              className={`form-control ${
-                errors.assetId ? "is-invalid" : ""
-              }`}
-              type="text"
-              name="assetId"
-              placeholder="e.g. 1"
-              value={assignData.assetId}
-              onChange={handleChange}
-            />
-
-            {errors.assetId && (
-              <p className="field-error">
-                {errors.assetId}
-              </p>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              Employee ID *
-            </label>
-
-            <input
-              className={`form-control ${
-                errors.employeeId
-                  ? "is-invalid"
-                  : ""
-              }`}
-              type="text"
-              name="employeeId"
-              placeholder="e.g. 5"
-              value={assignData.employeeId}
-              onChange={handleChange}
-            />
-
-            {errors.employeeId && (
-              <p className="field-error">
-                {errors.employeeId}
-              </p>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              Condition at Issue
-            </label>
-
-            <input
-              className="form-control"
-              type="text"
-              name="conditionAtIssue"
-              placeholder="e.g. Excellent"
-              value={assignData.conditionAtIssue}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
-        <div className="form-actions-right">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleAssign}
-          >
-            <i className="fas fa-link" />
-            Assign Asset
-          </button>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="section-title">
-          <i className="fas fa-clock-rotate-left text-muted" />
-          <span>Assignment History</span>
-        </div>
-
-        {loading ? (
-          <div className="empty-state">
-            <i className="fas fa-spinner fa-spin" />
-            <p>Loading...</p>
-          </div>
-        ) : filteredAssignments.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-inbox" />
-            <p>
-              No assignments found for selected
-              filters.
-            </p>
-          </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Asset Name</th>
-
-                  <th>Employee Name</th>
-
-                  <th>Issued</th>
-
-                  <th>Return Date</th>
-
-                  <th className="status-filter-header">
-                    <button
-                      type="button"
-                      className="status-filter-button"
-                      onClick={handleToggleStatusFilter}
-                    >
-                      Status{" "}
-                      <i className="fas fa-filter" />
-                    </button>
-
-                    {showStatusFilter && (
-                      <div className="status-filter-overlay">
-                        {Object.keys(
-                          INITIAL_STATUS_FILTERS
-                        ).map((status) => (
-                          <label
-                            key={status}
-                            className="filter-check-row"
-                          >
-                            <input
-                              type="checkbox"
-                              value={status}
-                              checked={
-                                statusFilters[status]
-                              }
-                              onChange={handleStatusFilterInputChange}
-                            />
-                            {status}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </th>
-
-                  {hasActiveAssignments && (
-                    <th>Action</th>
-                  )}
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginatedAssignments.map(
-                  (assignment) => {
-                    const assignmentId =
-                      assignment.assignmentId ||
-                      assignment.id;
-
-                    const returned =
-                      isReturned(assignment);
-
-                    return (
-                      <tr key={assignmentId}>
-                        <td className="asset-name">
-                          {assignment.assetName ||
-                            `Asset #${assignment.assetId}`}
-                        </td>
-
-                        <td>
-                          {assignment.employeeName ||
-                            `Employee #${assignment.employeeId}`}
-                        </td>
-
-                        <td className="td-mono">
-                          {formatDate(
-                            assignment.issuedDate
-                          )}
-                        </td>
-
-                        <td className="td-mono">
-                          {formatDate(
-                            assignment.returnDate ||
-                              assignment.actualReturnDate
-                          )}
-                        </td>
-
-                        <td>
-                          <span
-                            className={`badge ${
-                              returned
-                                ? "badge-green"
-                                : "badge-warn"
-                            }`}
-                          >
-                            {returned
-                              ? "Returned"
-                              : "Active"}
-                          </span>
-                        </td>
-
-                        {hasActiveAssignments && (
-                          <td>
-                            {!returned && (
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                data-assignment-id={assignmentId}
-                                  onClick={handleReturnClick}
-                              >
-                                <i className="fas fa-rotate-left" />
-                                Return
-                              </button>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-
-            <Pagination
-              page={currentPage}
-              pageSize={pageSize}
-              totalItems={
-                filteredAssignments.length
-              }
-              onPageChange={setPage}
-              onPageSizeChange={
-                handlePageSizeChange
-              }
-            />
-          </div>
-        )}
-      </div>
+      <AssignmentHistoryTable
+        loading={loading}
+        assignments={filteredAssignments}
+        paginatedAssignments={paginatedAssignments}
+        statusFilters={statusFilters}
+        showStatusFilter={showStatusFilter}
+        hasActiveAssignments={hasActiveAssignments}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={handlePageSizeChange}
+        onStatusFilterToggle={handleToggleStatusFilter}
+        onStatusFilterChange={handleStatusFilterInputChange}
+        onReturn={handleReturn}
+      />
     </DashboardLayout>
   );
 }
