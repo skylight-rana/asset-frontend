@@ -35,20 +35,22 @@
 
 .content {
     flex: 1;
-    padding: 28px;
+    padding: 30px;
+    max-width: 1440px;
+    width: 100%;
 }
 
 .page-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 26px;
 }
 
 .page-header h1 {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.3px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .page-eyebrow {

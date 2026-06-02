@@ -52,7 +52,6 @@ function App() {
           path={ROUTES.ADMIN_USERS}
           element={protectedPage("Admin", Users)}
         />
-
         <Route
           path={ROUTES.EMPLOYEE_DASHBOARD}
           element={protectedPage("Employee", EmployeeDashboard)}

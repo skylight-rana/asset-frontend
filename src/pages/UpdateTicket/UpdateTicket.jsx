@@ -1,219 +1,183 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { INITIAL_TICKET_STATUS, TICKET_STATUS_OPTIONS } from "../../constants";
+import { DetailsModal, NotificationDialog, Pagination, PageHeader } from "../../components";
+import { DEFAULT_PAGE_SIZE, TICKET_STATUS_OPTIONS } from "../../constants";
 import { DashboardLayout } from "../../layouts";
-import { getEmployees, getTickets, updateTicket } from "../../services";
-import {
-  getApiErrorMessage,
-  getTicketEmployeeName,
-  getTicketStatusBadgeClass,
-} from "../../utils";
+import { getAssets, getEmployees, getTickets, updateTicket } from "../../services";
+import { getApiErrorMessage, getTicketEmployeeName, getTicketStatusBadgeClass, getUser } from "../../utils";
 
 import "./UpdateTicket.css";
 
 function UpdateTicket() {
   const [tickets, setTickets] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [updatingTicketId, setUpdatingTicketId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const [ticketId, setTicketId] = useState("");
-  const [newStatus, setNewStatus] = useState(INITIAL_TICKET_STATUS);
-  const [errors, setErrors] = useState({});
+  useEffect(() => { setCurrentUser(getUser()); loadTickets(); }, []);
 
-  useEffect(() => {
-    loadTickets();
-  }, []);
+  const totalPages = Math.max(1, Math.ceil(tickets.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedTickets = useMemo(() => tickets.slice((currentPage - 1) * pageSize, currentPage * pageSize), [tickets, currentPage, pageSize]);
 
   const loadTickets = async () => {
     try {
       setLoading(true);
-
-      const [ticketRes, employeeRes] = await Promise.all([
-        getTickets(),
-        getEmployees(),
-      ]);
-
+      const [ticketRes, employeeRes, assetRes] = await Promise.all([getTickets(), getEmployees(), getAssets()]);
       setTickets(ticketRes.data || []);
       setEmployees(employeeRes.data || []);
+      setAssets(assetRes.data || []);
     } catch (error) {
-      console.error("Failed to load tickets", error);
+      setNotification({ type: "error", title: "Tickets not loaded", message: getApiErrorMessage(error, "Failed to load tickets.") });
     } finally {
       setLoading(false);
     }
   };
 
+  const saveTicketUpdate = async (ticket, changes, successMessage) => {
+    try {
+      setUpdatingTicketId(ticket.id);
+      const payload = {
+        status: changes.status ?? ticket.status,
+        resolutionNotes: changes.resolutionNotes ?? ticket.resolutionNotes ?? "",
+        assignedToEmployeeId: changes.assignedToEmployeeId ?? ticket.assignedToEmployeeId ?? null,
+        assignedByUserId: changes.assignedByUserId ?? ticket.assignedByUserId ?? null,
+      };
 
+      await updateTicket(ticket.id, payload);
 
-  const handleTicketIdChange = (e) => {
-    setTicketId(e.target.value);
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      ticketId: "",
-      form: "",
-    }));
+      setTickets((previousTickets) =>
+        previousTickets.map((item) =>
+          item.id === ticket.id ? { ...item, ...payload } : item
+        )
+      );
+
+      setNotification({
+        type: "success",
+        title: "Ticket updated",
+        message: successMessage || `Ticket #${ticket.id} updated successfully.`,
+      });
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Update failed",
+        message: getApiErrorMessage(error, "Ticket could not be updated."),
+      });
+    } finally {
+      setUpdatingTicketId(null);
+    }
   };
 
-  const handleStatusChange = (e) => {
-    setNewStatus(e.target.value);
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      status: "",
-      form: "",
-    }));
+  const handleStatusChange = async (ticket, status) => {
+    if (!status || status === ticket.status) return;
+    saveTicketUpdate(ticket, { status }, `Ticket #${ticket.id} status changed to ${status}.`);
   };
 
-  const handleUpdate = async () => {
-    const selectedTicketId = ticketId.trim();
-    const nextErrors = {};
+  const handleAssigneeChange = async (ticket, assignedToEmployeeId) => {
+    const nextAssignedToEmployeeId = assignedToEmployeeId ? Number(assignedToEmployeeId) : null;
+    if (String(nextAssignedToEmployeeId || "") === String(ticket.assignedToEmployeeId || "")) return;
 
-    if (!selectedTicketId) {
-      nextErrors.ticketId = "Ticket ID is required.";
-    }
-
-    if (!newStatus) {
-      nextErrors.status = "Please select a status.";
-    }
-
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      return;
-    }
+    const assignedEmployee = employees.find((employee) => String(employee.id) === String(nextAssignedToEmployeeId));
 
     try {
-      await updateTicket(selectedTicketId, {
-        status: newStatus,
-        resolutionNotes: "",
+      setUpdatingTicketId(ticket.id);
+      const payload = {
+        status: ticket.status,
+        resolutionNotes: ticket.resolutionNotes || "",
+        assignedToEmployeeId: nextAssignedToEmployeeId,
+        assignedByUserId: currentUser?.userId || currentUser?.UserId || ticket.assignedByUserId || null,
+      };
+
+      await updateTicket(ticket.id, payload);
+
+      setTickets((previousTickets) =>
+        previousTickets.map((item) =>
+          item.id === ticket.id
+            ? {
+                ...item,
+                ...payload,
+                assignedToEmployeeName: assignedEmployee?.name || "",
+                assignedToEmployeeEmail: assignedEmployee?.email || "",
+                assignedByUserId: currentUser?.userId || currentUser?.UserId || ticket.assignedByUserId || null,
+                assignedByUserName: currentUser?.name || currentUser?.Name || currentUser?.username || currentUser?.Username || "Admin",
+                assignedByUserEmail: currentUser?.email || currentUser?.Email || "",
+                assignedByUserProfilePhoto: currentUser?.profilePhoto || currentUser?.ProfilePhoto || "",
+              }
+            : item
+        )
+      );
+
+      setNotification({
+        type: "success",
+        title: "Ticket assigned",
+        message: assignedEmployee
+          ? `Ticket #${ticket.id} assigned to ${assignedEmployee.name}.`
+          : `Assignee removed from ticket #${ticket.id}.`,
       });
-
-      setTicketId("");
-      setNewStatus(INITIAL_TICKET_STATUS);
-      setErrors({});
-
-      loadTickets();
     } catch (error) {
-      console.error("Failed to update ticket", error);
-      setErrors({
-        form: getApiErrorMessage(
-          error,
-          "Update failed. Please check the ticket ID and try again."
-        ),
+      setNotification({
+        type: "error",
+        title: "Assignment failed",
+        message: getApiErrorMessage(error, "Ticket assignee could not be updated."),
       });
+    } finally {
+      setUpdatingTicketId(null);
     }
   };
+
+  const showAsset = (ticket, e) => {
+    e.stopPropagation();
+    setSelectedAsset(assets.find((asset) => String(asset.id) === String(ticket.assetId)) || { id: ticket.assetId, name: ticket.assetName });
+  };
+
+  const showEmployee = (ticket, e) => {
+    e.stopPropagation();
+    const employee = employees.find((item) => String(item.id) === String(ticket.employeeId));
+    setSelectedEmployee({
+      ...(employee || {}),
+      id: ticket.employeeId,
+      name: employee?.name || ticket.employeeName,
+      email: employee?.email || ticket.employeeEmail,
+      profilePhoto: employee?.profilePhoto || ticket.employeeProfilePhoto,
+      role: "Employee",
+    });
+  };
+
+  const showAssignedBy = (ticket, e) => {
+    e.stopPropagation();
+    setSelectedEmployee({
+      id: ticket.assignedByUserId,
+      name: ticket.assignedByUserName || "Admin",
+      email: ticket.assignedByUserEmail || "",
+      profilePhoto: ticket.assignedByUserProfilePhoto || "",
+      role: "Admin",
+    });
+  };
+
+  const handlePageSizeChange = (size) => { setPageSize(size); setPage(1); };
 
   return (
     <DashboardLayout role="Admin" title="Tickets">
-      <div className="page-header">
-        <h1>Update Ticket</h1>
+      <PageHeader title="Ticket Management" />
+
+      <div className="card" id="all-tickets">
+        <div className="section-title"><i className="fas fa-ticket text-muted" /><span>All Tickets</span></div>
+        {loading ? <div className="empty-state"><i className="fas fa-spinner fa-spin" /><p>Loading...</p></div> : tickets.length === 0 ? <div className="empty-state"><i className="fas fa-inbox" /><p>No tickets found.</p></div> : <>
+          <div className="table-wrap"><table><thead><tr><th>ID</th><th>Raised By</th><th>Asset</th><th>Issue</th><th>Assigned To</th><th>Status</th><th>Update</th></tr></thead><tbody>{paginatedTickets.map((ticket) => <tr key={ticket.id}><td className="td-mono">#{ticket.id}</td><td className="clickable-text" onClick={(e) => showEmployee(ticket, e)}>{getTicketEmployeeName(ticket, employees)}</td><td className="clickable-text" onClick={(e) => showAsset(ticket, e)}>{ticket.assetName || `Asset #${ticket.assetId}`}</td><td>{ticket.issueDescription}</td><td><select className="status-pill-select" value={ticket.assignedToEmployeeId || ""} disabled={updatingTicketId === ticket.id} onChange={(e) => handleAssigneeChange(ticket, e.target.value)}><option value="">Unassigned</option>{employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} {employee.email ? `(${employee.email})` : ""}</option>)}</select></td><td><span className={`badge ${getTicketStatusBadgeClass(ticket.status)}`}>{ticket.status}</span></td><td><select className="status-pill-select" value={ticket.status || ""} disabled={updatingTicketId === ticket.id} onChange={(e) => handleStatusChange(ticket, e.target.value)}>{TICKET_STATUS_OPTIONS.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}</select></td></tr>)}</tbody></table></div>
+          <Pagination page={currentPage} pageSize={pageSize} totalItems={tickets.length} onPageChange={setPage} onPageSizeChange={handlePageSizeChange} />
+        </>}
       </div>
 
-      <div className="card update-ticket-card">
-        <div className="section-title">
-          <i className="fas fa-pen-to-square text-muted" />
-          <span>Change Ticket Status</span>
-        </div>
-
-        {errors.form && <div className="form-error-banner">{errors.form}</div>}
-
-        <div className="form-grid">
-          <div className="form-group">
-            <label className="form-label">Ticket ID *</label>
-
-            <input
-              className={`form-control ${errors.ticketId ? "is-invalid" : ""}`}
-              type="text"
-              placeholder="e.g. 3"
-              value={ticketId}
-              onChange={handleTicketIdChange}
-            />
-            {errors.ticketId && (
-              <p className="field-error">{errors.ticketId}</p>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">New Status</label>
-
-            <select
-              className={`form-control ${errors.status ? "is-invalid" : ""}`}
-              value={newStatus}
-              onChange={handleStatusChange}
-            >
-              {TICKET_STATUS_OPTIONS.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
-            {errors.status && <p className="field-error">{errors.status}</p>}
-          </div>
-        </div>
-
-        <div className="form-actions-right">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleUpdate}
-          >
-            <i className="fas fa-check" />
-            Update Status
-          </button>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="section-title">
-          <i className="fas fa-ticket text-muted" />
-          <span>All Tickets</span>
-        </div>
-
-        {loading ? (
-          <div className="empty-state">
-            <i className="fas fa-spinner fa-spin" />
-            <p>Loading...</p>
-          </div>
-        ) : tickets.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-inbox" />
-            <p>No tickets found.</p>
-          </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Employee Name</th>
-                  <th>Issue</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {tickets.map((ticket) => (
-                  <tr key={ticket.id}>
-                    <td className="td-mono">#{ticket.id}</td>
-
-                    <td>{getTicketEmployeeName(ticket, employees)}</td>
-
-                    <td>{ticket.issueDescription}</td>
-
-                    <td>
-                      <span
-                        className={`badge ${getTicketStatusBadgeClass(
-                          ticket.status
-                        )}`}
-                      >
-                        {ticket.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <DetailsModal title="Asset Details" open={Boolean(selectedAsset)} onClose={() => setSelectedAsset(null)}><div className="detail-grid"><div className="detail-item"><span className="detail-label">Asset ID</span><span className="detail-value">#{selectedAsset?.id}</span></div><div className="detail-item"><span className="detail-label">Name</span><span className="detail-value">{selectedAsset?.name}</span></div><div className="detail-item"><span className="detail-label">Type</span><span className="detail-value">{selectedAsset?.type || "—"}</span></div><div className="detail-item"><span className="detail-label">Serial Number</span><span className="detail-value">{selectedAsset?.serialNumber || "—"}</span></div></div></DetailsModal>
+      <DetailsModal title={selectedEmployee?.role === "Admin" ? "Admin Details" : "Employee Details"} open={Boolean(selectedEmployee)} onClose={() => setSelectedEmployee(null)}><div className="profile-detail-card">{selectedEmployee?.profilePhoto ? <img src={selectedEmployee.profilePhoto} alt={selectedEmployee.name} className="profile-detail-photo" /> : <div className="profile-detail-photo placeholder"><i className="fas fa-user" /></div>}<div><h3>{selectedEmployee?.name || "N/A"}</h3><p>{selectedEmployee?.role || "Employee"}</p></div></div><div className="detail-grid"><div className="detail-item"><span className="detail-label">ID</span><span className="detail-value">{selectedEmployee?.id ? `#${selectedEmployee.id}` : "N/A"}</span></div><div className="detail-item"><span className="detail-label">Email</span><span className="detail-value">{selectedEmployee?.email || "—"}</span></div></div></DetailsModal>
+      <NotificationDialog open={Boolean(notification)} type={notification?.type} title={notification?.title} message={notification?.message} onClose={() => setNotification(null)} />
     </DashboardLayout>
   );
 }

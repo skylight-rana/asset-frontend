@@ -8,3 +8,6 @@ export const returnAsset = (data) =>
 
 export const getAssignments = () =>
   API.get("/assetassignment");
+
+export const getActiveAssignments = () =>
+  API.get("/assetassignment/active");

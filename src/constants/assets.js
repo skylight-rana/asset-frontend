@@ -1,7 +1,8 @@
 export const INITIAL_ASSET_FORM = {
   name: "",
   type: "",
-  serialNumber: "",
+  quantity: "1",
+  serialNumbers: "",
 };
 
-export const ASSET_TYPES = ["Hardware", "Storage", "Accessory", "Software License"];
+export const ASSET_TYPES = ["Hardware", "Storage", "Accessory", "Software License", "Others"];

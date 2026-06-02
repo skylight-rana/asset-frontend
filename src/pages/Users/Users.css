@@ -19,3 +19,19 @@
   background: var(--success-bg);
   color: var(--success);
 }
+
+.table-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-grid;
+    place-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text3);
+}
+
+.empty-state.compact {
+    padding: 24px;
+}

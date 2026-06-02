@@ -24,6 +24,7 @@ function Upload() {
   const [fileKey, setFileKey] = useState(Date.now());
   const [assetId, setAssetId] = useState("");
   const [documents, setDocuments] = useState([]);
+  const [assetDocumentMap, setAssetDocumentMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
@@ -61,7 +62,21 @@ function Upload() {
       setLoadingAssets(true);
 
       const res = await getAssets();
-      setAssets(res.data || []);
+      const loadedAssets = res.data || [];
+      setAssets(loadedAssets);
+
+      const documentEntries = await Promise.all(
+        loadedAssets.map(async (asset) => {
+          try {
+            const documentRes = await getDocumentsByAsset(asset.id);
+            return [asset.id, (documentRes.data || []).length];
+          } catch {
+            return [asset.id, 0];
+          }
+        })
+      );
+
+      setAssetDocumentMap(Object.fromEntries(documentEntries));
     } catch (error) {
       console.error("Failed to load assets", error);
       setErrors((prev) => ({
@@ -148,6 +163,7 @@ function Upload() {
       setErrors({});
       setFileKey(Date.now());
       loadDocuments(assetId);
+      setAssetDocumentMap((prev) => ({ ...prev, [assetId]: (prev[assetId] || 0) + 1 }));
     } catch (err) {
       const message =
         getApiErrorMessage(err, "Upload failed. Please try again.");
@@ -172,6 +188,7 @@ function Upload() {
           <div className="section-title">
             <i className="fas fa-upload text-muted" />
             <span>Upload Asset Document</span>
+            <span className="badge badge-blue">Step 1 Select Asset → Step 2 Upload File → Step 3 View Documents</span>
           </div>
 
           {successMessage && (
@@ -193,11 +210,14 @@ function Upload() {
                 {loadingAssets ? "Loading assets..." : "Select asset..."}
               </option>
 
-              {assets.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  #{asset.id} - {asset.name} ({asset.serialNumber})
-                </option>
-              ))}
+              {assets.map((asset) => {
+                const hasDocument = assetDocumentMap[asset.id] > 0;
+                return (
+                  <option key={asset.id} value={asset.id} className={hasDocument ? "option-has-document" : ""}>
+                    {hasDocument ? "★ " : ""}#{asset.id} - {asset.name} ({asset.serialNumber}){hasDocument ? " - Document uploaded" : ""}
+                  </option>
+                );
+              })}
             </select>
 
             {errors.assetId && (

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Pagination, Sidebar } from "../../components";
-import { DASHBOARD_STATS, DEFAULT_PAGE_SIZE } from "../../constants";
+import { DASHBOARD_STATS, DEFAULT_PAGE_SIZE, ROUTES } from "../../constants";
 import { getAssets, getAssignments, getEmployees, getTickets } from "../../services";
 import {
   formatDate,
@@ -14,6 +15,7 @@ import {
 import "./AdminDashboard.css";
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const [assets, setAssets] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -39,6 +41,12 @@ function AdminDashboard() {
     tickets: tickets.length,
     assignments: activeAssignments.length,
     employees: employees.length,
+  };
+
+  const statRoutes = {
+    assets: `${ROUTES.ADMIN_ASSETS}#all-assets`,
+    tickets: ROUTES.ADMIN_TICKETS,
+    assignments: ROUTES.ADMIN_ASSIGNMENTS,
   };
 
   const getEmployeeAssignments = (employeeId) => {
@@ -207,7 +215,7 @@ function AdminDashboard() {
 
           <div className="stats-grid">
             {DASHBOARD_STATS.map((stat) => (
-              <div key={stat.key} className={`stat-card ${stat.className}`}>
+              <div key={stat.key} className={`stat-card ${stat.className} ${statRoutes[stat.key] ? "clickable-row" : ""}`} onClick={() => statRoutes[stat.key] && navigate(statRoutes[stat.key])}>
                 <div className="stat-icon">
                   <i className={`fas ${stat.icon}`} />
                 </div>
@@ -219,7 +227,7 @@ function AdminDashboard() {
 
           <div className="card">
             <div className="section-title">
-              <span>Employee Assigned Assets</span>
+              <span>Employees</span>
 
               <div className="filter-bar">
                 <div className="header-search">
@@ -253,7 +261,8 @@ function AdminDashboard() {
                         <th>Employee ID</th>
                         <th>Name</th>
                         <th>Assigned Assets</th>
-                        <th>Total</th>
+                        <th>Tickets</th>
+                        <th>Total Assets</th>
                       </tr>
                     </thead>
 
@@ -299,6 +308,12 @@ function AdminDashboard() {
                                 No active assets
                               </span>
                             )}
+                          </td>
+
+                          <td>
+                            <span className="badge badge-warn">
+                              {employee.raisedTickets.length}
+                            </span>
                           </td>
 
                           <td>
@@ -430,7 +445,7 @@ function AdminDashboard() {
                     <thead>
                       <tr>
                         <th>Ticket #</th>
-                        <th>Asset ID</th>
+                        <th>Asset</th>
                         <th>Issue</th>
                         <th>Status</th>
                       </tr>
@@ -440,7 +455,7 @@ function AdminDashboard() {
                       {selectedEmployeeDetails.raisedTickets.map((ticket) => (
                         <tr key={ticket.id}>
                           <td className="td-mono">#{ticket.id}</td>
-                          <td className="td-mono">{ticket.assetId || "—"}</td>
+                          <td>{ticket.assetName || (ticket.assetId ? `Asset #${ticket.assetId}` : "—")}</td>
                           <td>{ticket.issueDescription}</td>
                           <td>
                             <span

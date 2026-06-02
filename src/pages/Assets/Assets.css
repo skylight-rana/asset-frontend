@@ -1,14 +1,78 @@
-.filter-bar-spaced {
-  margin-bottom: 20px;
+.asset-form-card {
+  margin-bottom: 24px;
+}
+
+.asset-form-card textarea.form-control {
+  min-height: 112px;
+  resize: vertical;
 }
 
 .asset-list-card {
   margin-bottom: 24px;
 }
 
+.asset-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.asset-table-header .section-title {
+  margin-bottom: 0;
+}
+
+.table-count-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.asset-table-wrap {
+  max-height: 520px;
+}
+
+.asset-table-wrap table {
+  min-width: 1120px;
+}
+
 .asset-name,
 .employee-name {
   font-weight: 500;
+}
+
+.asset-document-cell,
+.document-mini-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.document-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.document-mini-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
 }
 
 .form-actions-right {
@@ -37,14 +101,14 @@
 
 .status-filter-overlay {
   position: absolute;
-  top: 34px;
+  top: 36px;
   left: 12px;
-  z-index: 20;
-  min-width: 160px;
+  z-index: 30;
+  min-width: 170px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 14px 40px rgba(26, 25, 22, 0.12);
   padding: 10px;
   text-transform: none;
   letter-spacing: normal;
@@ -54,7 +118,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 4px;
+  padding: 7px 6px;
   color: var(--text);
   font-size: 13px;
   font-weight: 500;
@@ -66,4 +130,27 @@
 
 .text-muted {
   color: var(--text3);
+}
+
+.upload-inline-btn {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.upload-inline-btn.disabled {
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+@media (max-width: 720px) {
+  .asset-table-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .document-mini-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

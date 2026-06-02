@@ -1,79 +1,131 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import {
+  NotificationDialog,
+  PageHeader,
+  UserForm,
+  UserTable,
+} from "../../components";
+import { useNotification } from "../../hooks";
 import { DashboardLayout } from "../../layouts";
-import { createUser } from "../../services";
-import { getApiErrorMessage } from "../../utils";
+import { createUser, getEmployees, getUsers, updateUser } from "../../services";
+import {
+  buildUserPayload,
+  getApiErrorMessage,
+  INITIAL_USER_FORM,
+  normalizeUser,
+  userMatchesSearch,
+  validateUserForm,
+} from "../../utils";
 
 import "./Users.css";
 
-const INITIAL_FORM = {
-  name: "",
-  email: "",
-  username: "",
-  password: "",
-  role: "Employee",
-};
-
 function Users() {
-  const [form, setForm] = useState(INITIAL_FORM);
+  const { notification, showSuccess, showError, closeNotification } =
+    useNotification();
+
+  const [form, setForm] = useState(INITIAL_USER_FORM);
+  const [users, setUsers] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [search, setSearch] = useState("");
   const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validate = () => {
-    const nextErrors = {};
+  const isEditing = Boolean(form.id);
 
-    if (!form.role) nextErrors.role = "Please select user role.";
-    if (!form.username.trim()) nextErrors.username = "Username is required.";
-    if (!form.password.trim()) nextErrors.password = "Password is required.";
+  const filteredUsers = useMemo(
+    () => users.filter((user) => userMatchesSearch(user, search)),
+    [users, search]
+  );
 
-    if (form.role === "Employee") {
-      if (!form.name.trim()) nextErrors.name = "Employee name is required.";
-      if (!form.email.trim()) nextErrors.email = "Employee email is required.";
+  const loadUsers = async () => {
+    try {
+      const [userResponse, employeeResponse] = await Promise.allSettled([
+        getUsers(),
+        getEmployees(),
+      ]);
+
+      const loadedEmployees =
+        employeeResponse.status === "fulfilled" ? employeeResponse.value.data || [] : [];
+      const loadedUsers =
+        userResponse.status === "fulfilled" ? userResponse.value.data || [] : [];
+
+      setEmployees(loadedEmployees);
+      setUsers(loadedUsers.map((user) => normalizeUser(user, loadedEmployees)));
+    } catch {
+      setUsers([]);
+      setEmployees([]);
     }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
   };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setForm((prevForm) => ({
-      ...prevForm,
-      [name]: value,
-    }));
+    setForm((prevForm) => ({ ...prevForm, [name]: value }));
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
+  };
 
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: "",
-    }));
-    setSuccess("");
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () =>
+      setForm((prevForm) => ({ ...prevForm, profilePhoto: reader.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const resetForm = () => {
+    setForm(INITIAL_USER_FORM);
+    setErrors({});
+  };
+
+  const handleEdit = (user) => {
+    const selectedUser = normalizeUser(user, employees);
+
+    setForm({
+      id: selectedUser.id,
+      employeeId: selectedUser.employeeId || "",
+      name: selectedUser.name || "",
+      email: selectedUser.email || "",
+      username: selectedUser.username || "",
+      password: "",
+      role: selectedUser.role || "Employee",
+      profilePhoto: selectedUser.profilePhoto || "",
+    });
+    setErrors({});
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
+    const nextErrors = validateUserForm(form, isEditing);
 
-    const payload = {
-      name: form.name.trim(),
-      email: form.email.trim(),
-      username: form.username.trim(),
-      password: form.password.trim(),
-      role: form.role,
-    };
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    const payload = buildUserPayload(form, isEditing);
 
     try {
       setLoading(true);
-      setErrors({});
-      setSuccess("");
 
-      await createUser(payload);
+      if (isEditing) await updateUser(form.id, payload);
+      else await createUser(payload);
 
-      setForm(INITIAL_FORM);
-      setSuccess(`${payload.role} user created successfully.`);
+      showSuccess(
+        isEditing ? "User updated" : "User created",
+        `${payload.role} details saved successfully.`
+      );
+      resetForm();
+      loadUsers();
     } catch (error) {
-      console.error("Failed to create user", error);
-      setErrors({ form: getApiErrorMessage(error, "Failed to create user.") });
+      showError(
+        "User save failed",
+        getApiErrorMessage(error, "Failed to save user.")
+      );
     } finally {
       setLoading(false);
     }
@@ -81,101 +133,33 @@ function Users() {
 
   return (
     <DashboardLayout role="Admin" title="Users">
-      <div className="page-header">
-        <div>
-          <p className="page-eyebrow">User Management</p>
-          <h1>Create Users</h1>
-        </div>
-      </div>
+      <PageHeader title={isEditing ? "Update User" : "User Management"} />
 
-      <div className="card user-form-card">
-        <div className="section-title">
-          <i className="fas fa-user-plus text-muted" />
-          <span>Create Admin / Employee</span>
-        </div>
+      <UserForm
+        form={form}
+        errors={errors}
+        isEditing={isEditing}
+        loading={loading}
+        onCancelEdit={resetForm}
+        onChange={handleChange}
+        onPhotoChange={handlePhotoChange}
+        onSubmit={handleSubmit}
+      />
 
-        {errors.form && <div className="form-error-banner">{errors.form}</div>}
-        {success && <div className="form-success-banner">{success}</div>}
+      <UserTable
+        users={filteredUsers}
+        search={search}
+        onSearchChange={(e) => setSearch(e.target.value)}
+        onEdit={handleEdit}
+      />
 
-        <div className="form-grid-3">
-          <div className="form-group">
-            <label className="form-label">Role *</label>
-            <select
-              className={`form-control ${errors.role ? "is-invalid" : ""}`}
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-            >
-              <option value="Employee">Employee</option>
-              <option value="Admin">Admin</option>
-            </select>
-            {errors.role && <p className="field-error">{errors.role}</p>}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Username *</label>
-            <input
-              className={`form-control ${errors.username ? "is-invalid" : ""}`}
-              type="text"
-              name="username"
-              value={form.username}
-              placeholder="e.g. rana"
-              onChange={handleChange}
-            />
-            {errors.username && <p className="field-error">{errors.username}</p>}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Password *</label>
-            <input
-              className={`form-control ${errors.password ? "is-invalid" : ""}`}
-              type="password"
-              name="password"
-              value={form.password}
-              placeholder="Enter password"
-              onChange={handleChange}
-            />
-            {errors.password && <p className="field-error">{errors.password}</p>}
-          </div>
-        </div>
-
-        {form.role === "Employee" && (
-          <div className="form-grid-3">
-            <div className="form-group">
-              <label className="form-label">Employee Name *</label>
-              <input
-                className={`form-control ${errors.name ? "is-invalid" : ""}`}
-                type="text"
-                name="name"
-                value={form.name}
-                placeholder="e.g. John Doe"
-                onChange={handleChange}
-              />
-              {errors.name && <p className="field-error">{errors.name}</p>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Email *</label>
-              <input
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                type="email"
-                name="email"
-                value={form.email}
-                placeholder="e.g. john@example.com"
-                onChange={handleChange}
-              />
-              {errors.email && <p className="field-error">{errors.email}</p>}
-            </div>
-          </div>
-        )}
-
-        <div className="form-actions-right">
-          <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            <i className={`fas ${loading ? "fa-spinner fa-spin" : "fa-user-plus"}`} />
-            {loading ? "Creating..." : "Create User"}
-          </button>
-        </div>
-      </div>
+      <NotificationDialog
+        open={Boolean(notification)}
+        type={notification?.type}
+        title={notification?.title}
+        message={notification?.message}
+        onClose={closeNotification}
+      />
     </DashboardLayout>
   );
 }

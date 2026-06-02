@@ -144,3 +144,13 @@
 .logout-btn i {
   font-size: 13px;
 }
+.sidebar-user.profile-chip {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+}
+
+.sidebar-user.profile-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}

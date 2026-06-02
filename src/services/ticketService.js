@@ -14,3 +14,4 @@ export const updateTicketStatus = (data) =>
     status: data.status,
     resolutionNotes: data.resolutionNotes,
   });
+export const getTicketsAssignedToEmployee = (employeeId) => API.get(`/ticket/assigned/${employeeId}`);

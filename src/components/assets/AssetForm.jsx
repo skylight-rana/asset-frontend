@@ -3,7 +3,7 @@ import { FormMessage, SectionTitle } from "../common";
 
 function AssetForm({ form, errors, onChange, onSubmit }) {
   return (
-    <div className="card" id="add-form">
+    <div className="card asset-form-card" id="add-form">
       <SectionTitle icon="fas fa-plus-circle" title="Add New Asset" />
 
       <FormMessage message={errors.form} banner />
@@ -41,19 +41,36 @@ function AssetForm({ form, errors, onChange, onSubmit }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Serial Number *</label>
+          <label className="form-label">Quantity *</label>
           <input
-            className={`form-control ${errors.serialNumber ? "is-invalid" : ""}`}
-            type="text"
-            name="serialNumber"
-            placeholder="e.g. SN-001"
-            value={form.serialNumber}
+            className={`form-control ${errors.quantity ? "is-invalid" : ""}`}
+            type="number"
+            name="quantity"
+            min="1"
+            placeholder="e.g. 3"
+            value={form.quantity}
             onChange={onChange}
           />
-          {errors.serialNumber && (
-            <p className="field-error">{errors.serialNumber}</p>
-          )}
+          {errors.quantity && <p className="field-error">{errors.quantity}</p>}
         </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Serial Numbers *</label>
+        <textarea
+          className={`form-control ${errors.serialNumbers ? "is-invalid" : ""}`}
+          name="serialNumbers"
+          rows="4"
+          placeholder={"Enter one serial number per line or comma separated, e.g.\nSN-001\nSN-002\nSN-003"}
+          value={form.serialNumbers}
+          onChange={onChange}
+        />
+        <small className="text-muted">
+          Quantity must match the number of serial numbers. Each physical item must have a unique serial number.
+        </small>
+        {errors.serialNumbers && (
+          <p className="field-error">{errors.serialNumbers}</p>
+        )}
       </div>
 
       <div className="form-actions-right">

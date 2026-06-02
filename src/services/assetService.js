@@ -1,6 +1,6 @@
 import API from "./api";
 
-export const getAssets = () => API.get("/asset");
+export const getAssets = (params = {}) => API.get("/asset", { params });
 
 export const createAsset = (data) => API.post("/asset", data);
 

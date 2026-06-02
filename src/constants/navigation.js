@@ -16,7 +16,7 @@ export const NAVIGATION_CONFIG = {
     },
     {
       section: "Users",
-      items: [{ to: ROUTES.ADMIN_USERS, icon: "fa-users", label: "Create Users" }],
+      items: [{ to: ROUTES.ADMIN_USERS, icon: "fa-users", label: "Users" }],
     },
     {
       section: "Support",
