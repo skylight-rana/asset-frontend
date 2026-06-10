@@ -142,8 +142,6 @@ function AdminDashboard() {
     setPage(1);
   };
 
-
-
   const handleSearchInputChange = (e) => {
     handleSearch(e.target.value);
   };

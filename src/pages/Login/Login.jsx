@@ -24,6 +24,12 @@ function Login() {
     }));
   };
 
+  const handleEnterKey = (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    }
+  };
+
   const handleLogin = async () => {
     if (!data.username.trim() || !data.password.trim()) {
       setError("Please enter username and password");
@@ -50,13 +56,6 @@ function Login() {
       setLoading(false);
     }
   };
-
-  const handleEnterKey = (e) => {
-    if (e.key === "Enter") {
-      handleLogin();
-    }
-  };
-
 
   const handleTogglePassword = () => {
     setShowPassword((prev) => !prev);

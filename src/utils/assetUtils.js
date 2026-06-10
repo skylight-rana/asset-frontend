@@ -7,19 +7,6 @@ export const INITIAL_ASSET_STATUS_FILTERS = {
   Available: true,
 };
 
-export const parseSerialNumbers = (value = "") =>
-  value
-    .split(/[\n,]+/)
-    .map((serialNumber) => serialNumber.trim())
-    .filter(Boolean);
-
-export const buildAssetPayload = (form = INITIAL_ASSET_FORM) => ({
-  name: form.name.trim(),
-  type: form.type.trim(),
-  quantity: Number(form.quantity),
-  serialNumbers: parseSerialNumbers(form.serialNumbers),
-});
-
 export const validateAssetForm = (form, assets = []) => {
   const errors = {};
   const payload = buildAssetPayload(form);
@@ -63,6 +50,19 @@ export const validateAssetForm = (form, assets = []) => {
 
   return { errors, payload };
 };
+
+export const buildAssetPayload = (form = INITIAL_ASSET_FORM) => ({
+  name: form.name.trim(),
+  type: form.type.trim(),
+  quantity: Number(form.quantity),
+  serialNumbers: parseSerialNumbers(form.serialNumbers),
+});
+
+export const parseSerialNumbers = (value = "") =>
+  value
+    .split(/[\n,]+/)
+    .map((serialNumber) => serialNumber.trim())
+    .filter(Boolean);
 
 export const getAssetSearchText = ({ asset, assignment, employees, status }) => {
   const employeeName = assignment

@@ -1,9 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { DetailsModal, NotificationDialog, Pagination, Sidebar } from "../../components";
-import { DEFAULT_PAGE_SIZE, ROUTES, TICKET_STATUS_OPTIONS } from "../../constants";
-import { getAssets, getAssignments, getTickets, updateTicket } from "../../services";
+import {
+  DetailsModal,
+  NotificationDialog,
+  Pagination,
+  Sidebar,
+} from "../../components";
+import {
+  DEFAULT_PAGE_SIZE,
+  ROUTES,
+  TICKET_STATUS_OPTIONS,
+} from "../../constants";
+import {
+  getAssets,
+  getAssignments,
+  getTickets,
+  updateTicket,
+} from "../../services";
 import {
   belongsToEmployee,
   formatDate,
@@ -17,20 +31,29 @@ import {
 import "./EmployeeDashboard.css";
 
 function EmployeeDashboard() {
+  // =========================
+  // State
+  // =========================
   const [user, setUser] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [assets, setAssets] = useState([]);
+
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [selectedPerson, setSelectedPerson] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [updatingTicketId, setUpdatingTicketId] = useState(null);
   const [notification, setNotification] = useState(null);
+
+  const [assetPage, setAssetPage] = useState(1);
   const [ticketPage, setTicketPage] = useState(1);
   const [assignedTicketPage, setAssignedTicketPage] = useState(1);
-  const [assetPage, setAssetPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
+  // =========================
+  // Initial Load
+  // =========================
   useEffect(() => {
     const storedUser = getUser();
 
@@ -38,9 +61,13 @@ function EmployeeDashboard() {
     loadDashboardData(storedUser);
   }, []);
 
+  // =========================
+  // Derived Data
+  // =========================
   const myAssignments = useMemo(() => {
     return assignments.filter(
-      (assignment) => belongsToEmployee(assignment, user) && !isReturned(assignment)
+      (assignment) =>
+        belongsToEmployee(assignment, user) && !isReturned(assignment)
     );
   }, [assignments, user]);
 
@@ -52,16 +79,32 @@ function EmployeeDashboard() {
     const employeeId = getPrimaryEmployeeId(user);
 
     return tickets.filter(
-      (ticket) => String(ticket.assignedToEmployeeId || "") === String(employeeId || "")
+      (ticket) =>
+        String(ticket.assignedToEmployeeId || "") === String(employeeId || "")
     );
   }, [tickets, user]);
 
-  const assetTotalPages = Math.max(1, Math.ceil(myAssignments.length / pageSize));
+  // =========================
+  // Pagination
+  // =========================
+  const assetTotalPages = Math.max(
+    1,
+    Math.ceil(myAssignments.length / pageSize)
+  );
+
   const ticketTotalPages = Math.max(1, Math.ceil(myTickets.length / pageSize));
-  const assignedTicketTotalPages = Math.max(1, Math.ceil(ticketsAssignedToMe.length / pageSize));
+
+  const assignedTicketTotalPages = Math.max(
+    1,
+    Math.ceil(ticketsAssignedToMe.length / pageSize)
+  );
+
   const currentAssetPage = Math.min(assetPage, assetTotalPages);
   const currentTicketPage = Math.min(ticketPage, ticketTotalPages);
-  const currentAssignedTicketPage = Math.min(assignedTicketPage, assignedTicketTotalPages);
+  const currentAssignedTicketPage = Math.min(
+    assignedTicketPage,
+    assignedTicketTotalPages
+  );
 
   const paginatedAssignments = myAssignments.slice(
     (currentAssetPage - 1) * pageSize,
@@ -78,6 +121,9 @@ function EmployeeDashboard() {
     currentAssignedTicketPage * pageSize
   );
 
+  // =========================
+  // API Functions
+  // =========================
   const loadDashboardData = async (storedUser) => {
     try {
       setLoading(true);
@@ -98,22 +144,32 @@ function EmployeeDashboard() {
     }
   };
 
-  const handlePageSizeChange = (size) => {
-    setPageSize(size);
-    setAssetPage(1);
-    setTicketPage(1);
-    setAssignedTicketPage(1);
-  };
+  // =========================
+  // Asset Helpers
+  // =========================
+  function getAssetById(assetId) {
+    return assets.find((asset) => String(asset.id) === String(assetId));
+  }
 
-  const getAssetById = (assetId) => assets.find((asset) => String(asset.id) === String(assetId));
-
-  const showAssetDetails = (assetId) => {
+  function showAssetDetails(assetId) {
     const asset = getAssetById(assetId);
-    if (asset) setSelectedAsset(asset);
-  };
 
-  const getAssetName = (ticket) => ticket.assetName || getAssetById(ticket.assetId)?.name || `Asset #${ticket.assetId}`;
+    if (asset) {
+      setSelectedAsset(asset);
+    }
+  }
 
+  function getAssetName(ticket) {
+    return (
+      ticket.assetName ||
+      getAssetById(ticket.assetId)?.name ||
+      `Asset #${ticket.assetId}`
+    );
+  }
+
+  // =========================
+  // Person Helpers
+  // =========================
   const getRaisedByPerson = (ticket) => ({
     title: "Raised By",
     id: ticket.employeeId,
@@ -136,6 +192,9 @@ function EmployeeDashboard() {
     setSelectedPerson(person);
   };
 
+  // =========================
+  // Ticket Helpers
+  // =========================
   const updateLocalTicket = (ticketId, changes) => {
     setTickets((previousTickets) =>
       previousTickets.map((ticket) =>
@@ -144,11 +203,22 @@ function EmployeeDashboard() {
     );
   };
 
+  // =========================
+  // Event Handlers
+  // =========================
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setAssetPage(1);
+    setTicketPage(1);
+    setAssignedTicketPage(1);
+  };
+
   const handleAssignedTicketStatusChange = async (ticket, status) => {
     if (!status || status === ticket.status) return;
 
     try {
       setUpdatingTicketId(ticket.id);
+
       await updateTicket(ticket.id, {
         status,
         resolutionNotes: ticket.resolutionNotes || "",
@@ -157,6 +227,7 @@ function EmployeeDashboard() {
       });
 
       updateLocalTicket(ticket.id, { status });
+
       setNotification({
         type: "success",
         title: "Ticket status updated",
@@ -166,13 +237,19 @@ function EmployeeDashboard() {
       setNotification({
         type: "error",
         title: "Status update failed",
-        message: getApiErrorMessage(error, "Ticket status could not be updated."),
+        message: getApiErrorMessage(
+          error,
+          "Ticket status could not be updated."
+        ),
       });
     } finally {
       setUpdatingTicketId(null);
     }
   };
 
+  // =========================
+  // Render
+  // =========================
   return (
     <div className="app-layout">
       <Sidebar role="Employee" />
@@ -194,7 +271,9 @@ function EmployeeDashboard() {
           <div className="page-header">
             <div>
               <p className="page-eyebrow">Employee Portal</p>
-              <h1>{user ? `Welcome, ${user.username}` : "Employee Dashboard"}</h1>
+              <h1>
+                {user ? `Welcome, ${user.username}` : "Employee Dashboard"}
+              </h1>
             </div>
           </div>
 
@@ -211,7 +290,9 @@ function EmployeeDashboard() {
               <i className="fas fa-ticket" />
               <div>
                 <h4>Assigned Tickets</h4>
-                <p>{ticketsAssignedToMe.length} tickets assigned to you by admin.</p>
+                <p>
+                  {ticketsAssignedToMe.length} tickets assigned to you by admin.
+                </p>
               </div>
             </div>
           </div>
@@ -249,18 +330,29 @@ function EmployeeDashboard() {
                     <tbody>
                       {paginatedAssignments.map((assignment) => (
                         <tr key={assignment.assignmentId || assignment.id}>
-                          <td className="asset-name clickable-text" onClick={() => showAssetDetails(assignment.assetId)}>
-                            {assignment.assetName || `Asset #${assignment.assetId}`}
+                          <td
+                            className="asset-name clickable-text"
+                            onClick={() => showAssetDetails(assignment.assetId)}
+                          >
+                            {assignment.assetName ||
+                              `Asset #${assignment.assetId}`}
                           </td>
+
                           <td className="td-mono">{assignment.assetId}</td>
+
                           <td className="td-mono">
                             {formatDate(assignment.issuedDate)}
                           </td>
+
                           <td>
                             <span className="badge badge-warn">Active</span>
                           </td>
+
                           <td>
-                            <Link className="btn btn-primary btn-sm" to={`${ROUTES.EMPLOYEE_TICKETS}?assetId=${assignment.assetId}`}>
+                            <Link
+                              className="btn btn-primary btn-sm"
+                              to={`${ROUTES.EMPLOYEE_TICKETS}?assetId=${assignment.assetId}`}
+                            >
                               <i className="fas fa-ticket" /> Raise Ticket
                             </Link>
                           </td>
@@ -317,35 +409,69 @@ function EmployeeDashboard() {
                       {paginatedAssignedTickets.map((ticket) => (
                         <tr key={ticket.id}>
                           <td className="td-mono">#{ticket.id}</td>
+
                           <td>
-                            <button type="button" className="link-button" onClick={() => showPersonDetails(getRaisedByPerson(ticket))}>
-                              {ticket.employeeName || `Employee #${ticket.employeeId}`}
+                            <button
+                              type="button"
+                              className="link-button"
+                              onClick={() =>
+                                showPersonDetails(getRaisedByPerson(ticket))
+                              }
+                            >
+                              {ticket.employeeName ||
+                                `Employee #${ticket.employeeId}`}
                             </button>
                           </td>
+
                           <td>
-                            {ticket.assignedByUserId || ticket.assignedByUserName ? (
-                              <button type="button" className="link-button" onClick={() => showPersonDetails(getAssignedByPerson(ticket))}>
+                            {ticket.assignedByUserId ||
+                            ticket.assignedByUserName ? (
+                              <button
+                                type="button"
+                                className="link-button"
+                                onClick={() =>
+                                  showPersonDetails(getAssignedByPerson(ticket))
+                                }
+                              >
                                 {ticket.assignedByUserName || "Admin"}
                               </button>
                             ) : (
                               <span className="text-muted">Not available</span>
                             )}
                           </td>
-                          <td className="clickable-text" onClick={() => showAssetDetails(ticket.assetId)}>{getAssetName(ticket)}</td>
+
+                          <td
+                            className="clickable-text"
+                            onClick={() => showAssetDetails(ticket.assetId)}
+                          >
+                            {getAssetName(ticket)}
+                          </td>
+
                           <td>{ticket.issueDescription}</td>
+
                           <td>
                             <select
                               className="status-pill-select"
                               value={ticket.status || "Open"}
                               disabled={updatingTicketId === ticket.id}
-                              onChange={(e) => handleAssignedTicketStatusChange(ticket, e.target.value)}
+                              onChange={(event) =>
+                                handleAssignedTicketStatusChange(
+                                  ticket,
+                                  event.target.value
+                                )
+                              }
                             >
                               {TICKET_STATUS_OPTIONS.map((status) => (
-                                <option key={status.value} value={status.value}>{status.label}</option>
+                                <option key={status.value} value={status.value}>
+                                  {status.label}
+                                </option>
                               ))}
                             </select>
                           </td>
-                          <td className="td-mono">{formatDate(ticket.createdAt)}</td>
+
+                          <td className="td-mono">
+                            {formatDate(ticket.createdAt)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -367,7 +493,11 @@ function EmployeeDashboard() {
             <div className="section-title">
               <i className="fas fa-ticket text-muted" />
               <span>My Raised Tickets</span>
-              <Link className="btn btn-secondary btn-sm" to={ROUTES.EMPLOYEE_TICKETS}>
+
+              <Link
+                className="btn btn-secondary btn-sm"
+                to={ROUTES.EMPLOYEE_TICKETS}
+              >
                 Raise Ticket
               </Link>
             </div>
@@ -393,7 +523,6 @@ function EmployeeDashboard() {
                         <th>Issue</th>
                         <th>Status</th>
                         <th>Assigned To</th>
-                        <th>Comment</th>
                       </tr>
                     </thead>
 
@@ -401,8 +530,16 @@ function EmployeeDashboard() {
                       {paginatedTickets.map((ticket) => (
                         <tr key={ticket.id}>
                           <td className="td-mono">#{ticket.id}</td>
-                          <td className="clickable-text" onClick={() => showAssetDetails(ticket.assetId)}>{getAssetName(ticket)}</td>
+
+                          <td
+                            className="clickable-text"
+                            onClick={() => showAssetDetails(ticket.assetId)}
+                          >
+                            {getAssetName(ticket)}
+                          </td>
+
                           <td>{ticket.issueDescription}</td>
+
                           <td>
                             <span
                               className={`badge ${getTicketStatusBadgeClass(
@@ -412,8 +549,13 @@ function EmployeeDashboard() {
                               {ticket.status}
                             </span>
                           </td>
-                          <td>{ticket.assignedToEmployeeName || (ticket.assignedToEmployeeId ? `Employee #${ticket.assignedToEmployeeId}` : "Unassigned")}</td>
-                          <td>{ticket.resolutionNotes || <span className="text-muted">No comment</span>}</td>
+
+                          <td>
+                            {ticket.assignedToEmployeeName ||
+                              (ticket.assignedToEmployeeId
+                                ? `Employee #${ticket.assignedToEmployeeId}`
+                                : "Unassigned")}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -432,34 +574,81 @@ function EmployeeDashboard() {
           </div>
         </div>
       </main>
-      <DetailsModal title="Asset Details" open={Boolean(selectedAsset)} onClose={() => setSelectedAsset(null)}>
+
+      <DetailsModal
+        title="Asset Details"
+        open={Boolean(selectedAsset)}
+        onClose={() => setSelectedAsset(null)}
+      >
         <div className="detail-grid">
-          <div className="detail-item"><span className="detail-label">Asset ID</span><span className="detail-value">#{selectedAsset?.id}</span></div>
-          <div className="detail-item"><span className="detail-label">Name</span><span className="detail-value">{selectedAsset?.name}</span></div>
-          <div className="detail-item"><span className="detail-label">Type</span><span className="detail-value">{selectedAsset?.type}</span></div>
-          <div className="detail-item"><span className="detail-label">Serial Number</span><span className="detail-value">{selectedAsset?.serialNumber}</span></div>
+          <div className="detail-item">
+            <span className="detail-label">Asset ID</span>
+            <span className="detail-value">#{selectedAsset?.id}</span>
+          </div>
+
+          <div className="detail-item">
+            <span className="detail-label">Name</span>
+            <span className="detail-value">{selectedAsset?.name}</span>
+          </div>
+
+          <div className="detail-item">
+            <span className="detail-label">Type</span>
+            <span className="detail-value">{selectedAsset?.type}</span>
+          </div>
+
+          <div className="detail-item">
+            <span className="detail-label">Serial Number</span>
+            <span className="detail-value">{selectedAsset?.serialNumber}</span>
+          </div>
         </div>
       </DetailsModal>
 
-      <DetailsModal title={selectedPerson?.title || "User Details"} open={Boolean(selectedPerson)} onClose={() => setSelectedPerson(null)}>
+      <DetailsModal
+        title={selectedPerson?.title || "User Details"}
+        open={Boolean(selectedPerson)}
+        onClose={() => setSelectedPerson(null)}
+      >
         <div className="profile-detail-card">
           {selectedPerson?.profilePhoto ? (
-            <img src={selectedPerson.profilePhoto} alt={selectedPerson.name} className="profile-detail-photo" />
+            <img
+              src={selectedPerson.profilePhoto}
+              alt={selectedPerson.name}
+              className="profile-detail-photo"
+            />
           ) : (
-            <div className="profile-detail-photo placeholder"><i className="fas fa-user" /></div>
+            <div className="profile-detail-photo placeholder">
+              <i className="fas fa-user" />
+            </div>
           )}
+
           <div>
             <h3>{selectedPerson?.name || "N/A"}</h3>
             <p>{selectedPerson?.role || "User"}</p>
           </div>
         </div>
+
         <div className="detail-grid">
-          <div className="detail-item"><span className="detail-label">ID</span><span className="detail-value">{selectedPerson?.id ? `#${selectedPerson.id}` : "N/A"}</span></div>
-          <div className="detail-item"><span className="detail-label">Email</span><span className="detail-value">{selectedPerson?.email || "N/A"}</span></div>
+          <div className="detail-item">
+            <span className="detail-label">ID</span>
+            <span className="detail-value">
+              {selectedPerson?.id ? `#${selectedPerson.id}` : "N/A"}
+            </span>
+          </div>
+
+          <div className="detail-item">
+            <span className="detail-label">Email</span>
+            <span className="detail-value">{selectedPerson?.email || "N/A"}</span>
+          </div>
         </div>
       </DetailsModal>
 
-      <NotificationDialog open={Boolean(notification)} type={notification?.type} title={notification?.title} message={notification?.message} onClose={() => setNotification(null)} />
+      <NotificationDialog
+        open={Boolean(notification)}
+        type={notification?.type}
+        title={notification?.title}
+        message={notification?.message}
+        onClose={() => setNotification(null)}
+      />
     </div>
   );
 }

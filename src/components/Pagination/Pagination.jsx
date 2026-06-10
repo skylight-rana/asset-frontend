@@ -15,7 +15,11 @@ function Pagination({ page, pageSize, totalItems, onPageChange, onPageSizeChange
   const handleNextPage = () => {
     onPageChange(page + 1);
   };
-  const startItem = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
+  const startItem = 
+    totalItems === 0
+     ? 0 
+      : (page - 1) * pageSize + 1;
+  
   const endItem = Math.min(page * pageSize, totalItems);
 
   return (

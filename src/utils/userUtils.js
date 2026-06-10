@@ -9,17 +9,6 @@ export const INITIAL_USER_FORM = {
   profilePhoto: "",
 };
 
-const sameValue = (left, right) =>
-  String(left || "").toLowerCase() === String(right || "").toLowerCase();
-
-export const findMatchingEmployee = (user, employees = []) =>
-  employees.find(
-    (employee) =>
-      sameValue(employee.userId || employee.userID || employee.user?.id, user.id) ||
-      sameValue(employee.username || employee.userName, user.username || user.userName) ||
-      sameValue(employee.email, user.email)
-  );
-
 export const normalizeUser = (user = {}, employees = []) => {
   const matchedEmployee = findMatchingEmployee(user, employees);
 
@@ -39,6 +28,17 @@ export const normalizeUser = (user = {}, employees = []) => {
     profilePhoto: user.profilePhoto || user.profilePicture || user.photo || "",
   };
 };
+
+export const findMatchingEmployee = (user, employees = []) =>
+  employees.find(
+    (employee) =>
+      sameValue(employee.userId || employee.userID || employee.user?.id, user.id) ||
+      sameValue(employee.username || employee.userName, user.username || user.userName) ||
+      sameValue(employee.email, user.email)
+  );
+
+const sameValue = (left, right) =>
+  String(left || "").toLowerCase() === String(right || "").toLowerCase();
 
 export const validateUserForm = (form, isEditing) => {
   const errors = {};

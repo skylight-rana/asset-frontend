@@ -8,7 +8,12 @@ import {
 } from "../../components";
 import { useNotification } from "../../hooks";
 import { DashboardLayout } from "../../layouts";
-import { createUser, getEmployees, getUsers, updateUser } from "../../services";
+import {
+  createUser,
+  getEmployees,
+  getUsers,
+  updateUser,
+} from "../../services";
 import {
   buildUserPayload,
   getApiErrorMessage,
@@ -21,8 +26,12 @@ import {
 import "./Users.css";
 
 function Users() {
-  const { notification, showSuccess, showError, closeNotification } =
-    useNotification();
+  const {
+    notification,
+    showSuccess,
+    showError,
+    closeNotification,
+  } = useNotification();
 
   const [form, setForm] = useState(INITIAL_USER_FORM);
   const [users, setUsers] = useState([]);
@@ -33,10 +42,13 @@ function Users() {
 
   const isEditing = Boolean(form.id);
 
-  const filteredUsers = useMemo(
-    () => users.filter((user) => userMatchesSearch(user, search)),
-    [users, search]
-  );
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => userMatchesSearch(user, search));
+  }, [users, search]);
 
   const loadUsers = async () => {
     try {
@@ -46,42 +58,59 @@ function Users() {
       ]);
 
       const loadedEmployees =
-        employeeResponse.status === "fulfilled" ? employeeResponse.value.data || [] : [];
+        employeeResponse.status === "fulfilled"
+          ? employeeResponse.value.data || []
+          : [];
+
       const loadedUsers =
-        userResponse.status === "fulfilled" ? userResponse.value.data || [] : [];
+        userResponse.status === "fulfilled"
+          ? userResponse.value.data || []
+          : [];
 
       setEmployees(loadedEmployees);
-      setUsers(loadedUsers.map((user) => normalizeUser(user, loadedEmployees)));
+      setUsers(
+        loadedUsers.map((user) => normalizeUser(user, loadedEmployees))
+      );
     } catch {
       setUsers([]);
       setEmployees([]);
     }
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  const resetForm = () => {
+    setForm(INITIAL_USER_FORM);
+    setErrors({});
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setForm((prevForm) => ({ ...prevForm, [name]: value }));
-    setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: "",
+    }));
   };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () =>
-      setForm((prevForm) => ({ ...prevForm, profilePhoto: reader.result }));
-    reader.readAsDataURL(file);
-  };
 
-  const resetForm = () => {
-    setForm(INITIAL_USER_FORM);
-    setErrors({});
+    reader.onload = () => {
+      setForm((prevForm) => ({
+        ...prevForm,
+        profilePhoto: reader.result,
+      }));
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleEdit = (user) => {
@@ -97,14 +126,20 @@ function Users() {
       role: selectedUser.role || "Employee",
       profilePhoto: selectedUser.profilePhoto || "",
     });
+
     setErrors({});
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleSubmit = async () => {
     const nextErrors = validateUserForm(form, isEditing);
 
     setErrors(nextErrors);
+
     if (Object.keys(nextErrors).length > 0) return;
 
     const payload = buildUserPayload(form, isEditing);
@@ -112,13 +147,17 @@ function Users() {
     try {
       setLoading(true);
 
-      if (isEditing) await updateUser(form.id, payload);
-      else await createUser(payload);
+      if (isEditing) {
+        await updateUser(form.id, payload);
+      } else {
+        await createUser(payload);
+      }
 
       showSuccess(
         isEditing ? "User updated" : "User created",
         `${payload.role} details saved successfully.`
       );
+
       resetForm();
       loadUsers();
     } catch (error) {
@@ -129,6 +168,10 @@ function Users() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
   };
 
   return (
@@ -149,7 +192,7 @@ function Users() {
       <UserTable
         users={filteredUsers}
         search={search}
-        onSearchChange={(e) => setSearch(e.target.value)}
+        onSearchChange={handleSearchChange}
         onEdit={handleEdit}
       />
 

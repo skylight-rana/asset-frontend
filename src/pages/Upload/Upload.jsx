@@ -17,7 +17,6 @@ import { getApiErrorMessage } from "../../utils";
 
 import "./Upload.css";
 
-
 function Upload() {
   const [assets, setAssets] = useState([]);
   const [file, setFile] = useState(null);
@@ -25,9 +24,11 @@ function Upload() {
   const [assetId, setAssetId] = useState("");
   const [documents, setDocuments] = useState([]);
   const [assetDocumentMap, setAssetDocumentMap] = useState({});
+
   const [loading, setLoading] = useState(false);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
+
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -47,7 +48,9 @@ function Upload() {
 
     try {
       setLoadingDocuments(true);
+
       const res = await getDocumentsByAsset(selectedAssetId);
+
       setDocuments(res.data || []);
     } catch (error) {
       console.error("Failed to load documents", error);
@@ -63,12 +66,14 @@ function Upload() {
 
       const res = await getAssets();
       const loadedAssets = res.data || [];
+
       setAssets(loadedAssets);
 
       const documentEntries = await Promise.all(
         loadedAssets.map(async (asset) => {
           try {
             const documentRes = await getDocumentsByAsset(asset.id);
+
             return [asset.id, (documentRes.data || []).length];
           } catch {
             return [asset.id, 0];
@@ -79,8 +84,9 @@ function Upload() {
       setAssetDocumentMap(Object.fromEntries(documentEntries));
     } catch (error) {
       console.error("Failed to load assets", error);
-      setErrors((prev) => ({
-        ...prev,
+
+      setErrors((prevErrors) => ({
+        ...prevErrors,
         assetId: "Unable to load assets. Please refresh the page.",
       }));
     } finally {
@@ -108,30 +114,33 @@ function Upload() {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const handleAssetChange = (e) => {
+    const selectedAssetId = e.target.value;
+
+    setAssetId(selectedAssetId);
+    setSuccessMessage("");
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      assetId: "",
+      form: "",
+    }));
+
+    loadDocuments(selectedAssetId);
+  };
+
   const handleFileChange = (selectedFile) => {
     setSuccessMessage("");
     setFile(selectedFile || null);
 
     if (selectedFile) {
-      setErrors((prev) => ({
-        ...prev,
+      setErrors((prevErrors) => ({
+        ...prevErrors,
         file:
           selectedFile.size > MAX_UPLOAD_FILE_SIZE_BYTES
             ? `File size should not be more than ${MAX_UPLOAD_FILE_SIZE_MB}MB.`
             : "",
       }));
     }
-  };
-
-
-
-  const handleAssetChange = (e) => {
-    const selectedAssetId = e.target.value;
-
-    setAssetId(selectedAssetId);
-    setSuccessMessage("");
-    setErrors((prev) => ({ ...prev, assetId: "", form: "" }));
-    loadDocuments(selectedAssetId);
   };
 
   const handleDropZoneClick = () => {
@@ -158,18 +167,24 @@ function Upload() {
       await uploadDocument(formData);
 
       setSuccessMessage("File uploaded successfully.");
-
       setFile(null);
       setErrors({});
       setFileKey(Date.now());
-      loadDocuments(assetId);
-      setAssetDocumentMap((prev) => ({ ...prev, [assetId]: (prev[assetId] || 0) + 1 }));
-    } catch (err) {
-      const message =
-        getApiErrorMessage(err, "Upload failed. Please try again.");
 
-      setErrors((prev) => ({
-        ...prev,
+      loadDocuments(assetId);
+
+      setAssetDocumentMap((prevMap) => ({
+        ...prevMap,
+        [assetId]: (prevMap[assetId] || 0) + 1,
+      }));
+    } catch (err) {
+      const message = getApiErrorMessage(
+        err,
+        "Upload failed. Please try again."
+      );
+
+      setErrors((prevErrors) => ({
+        ...prevErrors,
         form: message,
       }));
     } finally {
@@ -188,7 +203,9 @@ function Upload() {
           <div className="section-title">
             <i className="fas fa-upload text-muted" />
             <span>Upload Asset Document</span>
-            <span className="badge badge-blue">Step 1 Select Asset → Step 2 Upload File → Step 3 View Documents</span>
+            <span className="badge badge-blue">
+              Step 1 Select Asset → Step 2 Upload File → Step 3 View Documents
+            </span>
           </div>
 
           {successMessage && (
@@ -212,9 +229,16 @@ function Upload() {
 
               {assets.map((asset) => {
                 const hasDocument = assetDocumentMap[asset.id] > 0;
+
                 return (
-                  <option key={asset.id} value={asset.id} className={hasDocument ? "option-has-document" : ""}>
-                    {hasDocument ? "★ " : ""}#{asset.id} - {asset.name} ({asset.serialNumber}){hasDocument ? " - Document uploaded" : ""}
+                  <option
+                    key={asset.id}
+                    value={asset.id}
+                    className={hasDocument ? "option-has-document" : ""}
+                  >
+                    {hasDocument ? "★ " : ""}#{asset.id} - {asset.name} (
+                    {asset.serialNumber})
+                    {hasDocument ? " - Document uploaded" : ""}
                   </option>
                 );
               })}
@@ -269,11 +293,13 @@ function Upload() {
             >
               {loading ? (
                 <>
-                  <i className="fas fa-spinner fa-spin" /> Uploading…
+                  <i className="fas fa-spinner fa-spin" />
+                  Uploading…
                 </>
               ) : (
                 <>
-                  <i className="fas fa-upload" /> Upload File
+                  <i className="fas fa-upload" />
+                  Upload File
                 </>
               )}
             </button>

@@ -101,6 +101,10 @@ function Assets() {
     setDocumentsByAsset(Object.fromEntries(entries));
   };
 
+  useEffect(() => {
+    loadAssets();
+  }, []);
+
   const loadAssets = async () => {
     try {
       const [assetRes, assignmentRes, employeeRes] = await Promise.all([
@@ -122,10 +126,6 @@ function Assets() {
       );
     }
   };
-
-  useEffect(() => {
-    loadAssets();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

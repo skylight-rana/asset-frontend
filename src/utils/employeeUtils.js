@@ -20,6 +20,13 @@ export function belongsToEmployee(item, user) {
   );
 }
 
+export function getTicketEmployeeName(ticket, employees = []) {
+  if (ticket?.employeeName) return ticket.employeeName;
+  if (ticket?.username) return ticket.username;
+
+  return getEmployeeDisplayName(ticket?.employeeId, employees);
+}
+
 export function getEmployeeDisplayName(employeeId, employees = []) {
   const employee = employees.find(
     (item) =>
@@ -28,11 +35,4 @@ export function getEmployeeDisplayName(employeeId, employees = []) {
   );
 
   return employee?.name || employee?.username || `Employee ID: ${employeeId}`;
-}
-
-export function getTicketEmployeeName(ticket, employees = []) {
-  if (ticket?.employeeName) return ticket.employeeName;
-  if (ticket?.username) return ticket.username;
-
-  return getEmployeeDisplayName(ticket?.employeeId, employees);
 }
